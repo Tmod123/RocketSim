@@ -1,1 +1,1 @@
-TEMP
+7/5 Wondered whether to use (in simple) the kinematics equation described by x=vt or x=vt+1/2at^2. After contenplating, I dicided to use the former since I was already updating the velocity everytimestep, and the ladder is better used for longer approximations with a constant acceleration.
