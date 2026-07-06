@@ -1,1 +1,65 @@
-TEMP
+Plans for V1:
+Pretty much a 1:1 copy of the simple Excel assignment. I want a 1D simulator (No parachute) that tracks time, mass (all mks), Altitude, Velocity, Acceleration, Net force, Weight, Thrust, Drag
+Time: 0.1 seconds timestep
+Mass: in Kg, will be changing due to loss of fuel mass (averaged fuel loss subtracted over time)
+Altitude: in Meters and found with y=vt+(1/2)at^2
+Velocity: Meters/Second found through v=at
+Acceleration: Meters/Second^2 found theough F=ma
+Force: Newtons and sum of forces.
+Weight: Mass*Gravity (9.81m/s^2)
+Thrust: Averaged thrust found with ThrustCurve.org
+Drag: Newtons and found using D= 1/2*Cd*A*p*V^2. The drag coefficient will be from standard models. Density will be 1.225 kg/m^3 (ISA Density at sea level), have area be simple circle area for rocket-tube
+Inputs:
+Initial Dry Mass, Rocket Radius, Thrust data, massloss data
+
+V1.1:
+Add single parachute deployment at apogee
+
+V1.2
+add linear interpolation for thrust& mass-loss
+
+V1.3
+Add Runge-Kutta implementation.
+
+v1.4
+add implementation for uploading Thrustcurve files rather than manual input
+
+v1.5
+Changing Air density (due to altitude found with ISA)
+
+v1.6
+Simple output of the important yields, apogee, maximum Velocity, time to apogee.
+
+v1.7
+Visual Representation
+
+(TBA)
+
+v2.0
+2 dimensional rocket launch w/ input launch angle.
+
+v2.1
+Input CG/CP and use margin.
+
+v2.2
+varying Cd according to mach
+
+v2.3
+add rocket model geometry input and use barrowman to find CP.
+
+v2.4
+add input for base Cd using IRL Wind Tunnel
+
+v2.5
+add Wind implementation
+
+v2.6
+add multiple parachute implementation
+
+v3.0
+6DOF, 3d flight, This will take a while. 
+
+(Extra polishing)
+
+V4
+Making an actual good Frontend and hopefully deploy it.
