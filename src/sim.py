@@ -1,4 +1,4 @@
-#sim.py - V1.0
+#sim.py - V1.1
 
 import matplotlib.pyplot as plt 
 
@@ -9,8 +9,10 @@ dragCoefficient = 0.5 # dimensionless
 timeStep = 0.1 # seconds
 
 #Inputs
-dryMass = 0.1 # kg
+dryMass = 0.0259 # kg
 radius = 0.0127 # m
+parachuteArea = 0.060341815 # m^2
+parachuteDragCoefficient = 1.00 # dimensionless
 
 timeCurve = [0,0.031,0.092,0.139,0.192,0.209,0.231,0.248,0.292,0.37,0.475,0.671,0.702,0.723,0.85,1.063,1.211,1.242,1.303,1.468,1.656,1.821,1.834,1.847,1.86]
 thrustCurve = [0,0.946,4.826,9.936,14.09,11.446,7.381,6.151,5.489,4.921,4.448,4.258,4.542,4.164,4.448,4.353,4.353,4.069,4.258,4.353,4.448,4.448,2.933,1.325,0]
@@ -67,8 +69,11 @@ def update_Mass(mass):
         return mass - avgMassFlowRate * timeStep
 
 def calc_drag(velocity):
-    area = 3.14159 * radius ** 2
-    return 0.5 * airDensity * dragCoefficient * area * velocity ** 2
+    if velocity < 0:
+        return 0.5 * airDensity * parachuteDragCoefficient * parachuteArea * velocity ** 2
+    else:
+        area = 3.14159 * radius ** 2
+        return 0.5 * airDensity * dragCoefficient * area * velocity ** 2
 
 def calc_weight(mass):
     return mass * gravity
@@ -98,14 +103,8 @@ def run_simulation():
         acceleration = calc_acceleration(netForce, mass)
         velocity = update_Velocity(velocity, acceleration)
         altitude = update_Altitude(altitude, velocity)
-        #$fix_Start(altitude, time)
 
         
-
-def fix_Start(altitude, time):
-    if time<timeCurve[len(timeCurve)-1]:
-        if altitude < 0:
-            altitude = 0
 
 def plot_results():
     plt.figure(figsize=(12, 6))
@@ -135,3 +134,4 @@ if __name__ == "__main__":
     run_simulation()
     for i in range(len(timeList)):
         print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s², Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N")
+    plot_results()
