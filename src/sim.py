@@ -1,6 +1,32 @@
-#sim.py - V1.1
+#sim.py - V1.2
 
 import matplotlib.pyplot as plt 
+import csv
+
+def import_Motor_Data(filename):
+    filename = str(filename)
+    times = []
+    thrusts = []
+
+    with open(filename, newline="") as f:
+        reader = csv.reader(f)
+
+        for row in reader:
+            if not row:
+                continue
+
+            if row[0].startswith(";"):
+                continue
+
+            try:
+                times.append(float(row[0]))
+                thrusts.append(float(row[1]))
+            except ValueError:
+                pass
+
+        return [times, thrusts]
+
+#print(import_Motor_Data("Estes_E12.csv"))
 
 #Constants
 gravity = 9.81 # m/s^2
@@ -13,9 +39,15 @@ dryMass = 0.0259 # kg
 radius = 0.0127 # m
 parachuteArea = 0.060341815 # m^2
 parachuteDragCoefficient = 1.00 # dimensionless
+#fileName = input("Enter the CSV file containing motor data: ") # CSV file containing motor data
 
-timeCurve = [0,0.031,0.092,0.139,0.192,0.209,0.231,0.248,0.292,0.37,0.475,0.671,0.702,0.723,0.85,1.063,1.211,1.242,1.303,1.468,1.656,1.821,1.834,1.847,1.86]
-thrustCurve = [0,0.946,4.826,9.936,14.09,11.446,7.381,6.151,5.489,4.921,4.448,4.258,4.542,4.164,4.448,4.353,4.353,4.069,4.258,4.353,4.448,4.448,2.933,1.325,0]
+#motor_csv = import_Motor_Data(fileName)
+motor_csv = import_Motor_Data("Estes_C6.csv")
+
+timeCurve = motor_csv[0]
+thrustCurve = motor_csv[1]
+#timeCurve = [0,0.031,0.092,0.139,0.192,0.209,0.231,0.248,0.292,0.37,0.475,0.671,0.702,0.723,0.85,1.063,1.211,1.242,1.303,1.468,1.656,1.821,1.834,1.847,1.86]
+#thrustCurve = [0,0.946,4.826,9.936,14.09,11.446,7.381,6.151,5.489,4.921,4.448,4.258,4.542,4.164,4.448,4.353,4.353,4.069,4.258,4.353,4.448,4.448,2.933,1.325,0]
 massCurve = [10.8,10.782,10.5664,10.1415,9.36163,9.09576,8.84209,8.7012,8.38754,7.89025,7.28777,6.24272,6.07565,5.96368,5.29384,4.14576,3.35665,3.19675,2.88566,2.0155,1.00217,0.103215,0.04445,0.0105492,0]
 
 
@@ -31,7 +63,6 @@ thrust = 0
 drag = 0
 avgMassFlowRate = (massCurve[0] / timeCurve[len(timeCurve)-1])/1000  # Average mass flow rate over the burn time    
 avgThrust = 4.7
-#sum(thrustCurve) / timeCurve[len(timeCurve)-1]  # Average thrust over the burn time, this is wrong for some reason.
 
 #Init Lists
 timeList = []
@@ -56,13 +87,13 @@ def calc_netForce(thrust, weight, drag):
 def calc_acceleration(netForce, mass):
     return netForce / mass
 
-def update_Velocity(velocity, acceleration):
+def calc_Velocity(velocity, acceleration):
     return velocity + acceleration * timeStep
 
-def update_Altitude(altitude, velocity):
+def calc_Altitude(altitude, velocity):
     return altitude + velocity * timeStep
 
-def update_Mass(mass):
+def calc_Mass(mass):
     if time > timeCurve[len(timeCurve)-1]:
         return mass
     else:
@@ -78,6 +109,20 @@ def calc_drag(velocity):
 def calc_weight(mass):
     return mass * gravity
 
+def calc_thrust(time):
+    if time > timeCurve[len(timeCurve)-1]:
+        return 0
+    else:
+        for i in range(len(timeCurve)-1):
+            if timeCurve[i] <= time < timeCurve[i+1]:
+                Time1= timeCurve[i]
+                Time2= timeCurve[i+1]
+                Thrust1= thrustCurve[i]
+                Thrust2= thrustCurve[i+1]
+                break
+        return Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1)
+
+
 def run_simulation():
     global time, mass, altitude, velocity, acceleration, netForce, weight, thrust, drag
     while altitude >= -1:
@@ -92,17 +137,14 @@ def run_simulation():
         dragList.append(drag)
 
         time += timeStep
-        mass = update_Mass(mass)
+        mass = calc_Mass(mass)
         weight = calc_weight(mass)
         drag = calc_drag(velocity)
-        if time <= timeCurve[len(timeCurve)-1]:
-            thrust = avgThrust
-        else:
-            thrust = 0
+        thrust = calc_thrust(time)
         netForce = calc_netForce(thrust, weight, drag)
         acceleration = calc_acceleration(netForce, mass)
-        velocity = update_Velocity(velocity, acceleration)
-        altitude = update_Altitude(altitude, velocity)
+        velocity = calc_Velocity(velocity, acceleration)
+        altitude = calc_Altitude(altitude, velocity)
 
         
 
