@@ -1,4 +1,4 @@
-#sim.py - V0.1
+#sim.py - V1.0
 
 import matplotlib.pyplot as plt 
 
