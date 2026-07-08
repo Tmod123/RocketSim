@@ -2,7 +2,7 @@ Plans for V1:
 Pretty much a 1:1 copy of the simple Excel assignment. I want a 1D simulator (No parachute) that tracks time, mass (all mks), Altitude, Velocity, Acceleration, Net force, Weight, Thrust, Drag
 Time: 0.1 seconds timestep
 Mass: in Kg, will be changing due to loss of fuel mass (averaged fuel loss subtracted over time)
-Altitude: in Meters and found with y=vt+(1/2)at^2
+Altitude: in Meters and found with y=vt+(1/2)at^2 Edit: decided to use y=vt due to the defiction of v=dy/dt.
 Velocity: Meters/Second found through v=at
 Acceleration: Meters/Second^2 found theough F=ma
 Force: Newtons and sum of forces.
@@ -19,10 +19,10 @@ V1.2
 add linear interpolation for thrust& mass-loss
 
 V1.3
-Add Runge-Kutta implementation.
+add implementation for uploading Thrustcurve files rather than manual input
 
 v1.4
-add implementation for uploading Thrustcurve files rather than manual input
+Add Runge-Kutta implementation.
 
 v1.5
 Changing Air density (due to altitude found with ISA)
