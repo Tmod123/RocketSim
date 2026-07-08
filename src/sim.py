@@ -10,7 +10,7 @@ timeStep = 0.1 # seconds
 
 #Inputs
 dryMass = 0.1 # kg
-radius = 0.001 # m
+radius = 0.0127 # m
 
 timeCurve = [0,0.031,0.092,0.139,0.192,0.209,0.231,0.248,0.292,0.37,0.475,0.671,0.702,0.723,0.85,1.063,1.211,1.242,1.303,1.468,1.656,1.821,1.834,1.847,1.86]
 thrustCurve = [0,0.946,4.826,9.936,14.09,11.446,7.381,6.151,5.489,4.921,4.448,4.258,4.542,4.164,4.448,4.353,4.353,4.069,4.258,4.353,4.448,4.448,2.933,1.325,0]
@@ -19,7 +19,7 @@ massCurve = [10.8,10.782,10.5664,10.1415,9.36163,9.09576,8.84209,8.7012,8.38754,
 
 #Init Variables
 time = 0
-mass = dryMass + massCurve[0]
+mass = dryMass + (massCurve[0]/1000)  # Initial mass in kg (dry mass + initial propellant mass)
 altitude = 0
 velocity = 0
 acceleration = 0
@@ -27,13 +27,20 @@ netForce = 0
 weight = 0
 thrust = 0
 drag = 0
-avgMassFlowRate = massCurve[0] / timeCurve[len(timeCurve)-1]  # Average mass flow rate over the burn time    
-avgThrust = sum(thrustCurve) / timeCurve[len(timeCurve)-1]  # Average thrust over the burn time
+avgMassFlowRate = (massCurve[0] / timeCurve[len(timeCurve)-1])/1000  # Average mass flow rate over the burn time    
+avgThrust = 4.7
+#sum(thrustCurve) / timeCurve[len(timeCurve)-1]  # Average thrust over the burn time, this is wrong for some reason.
 
 #Init Lists
 timeList = []
+massList = []
 altitudeList = []
 velocityList = []
+accelerationList = []
+netForceList = []
+weightList = []
+thrustList = []
+dragList = []   
 
 
 #Functions
@@ -68,41 +75,37 @@ def calc_weight(mass):
 
 def run_simulation():
     global time, mass, altitude, velocity, acceleration, netForce, weight, thrust, drag
-    while altitude >= 0:
-        # Update time
-        time += timeStep
-
-        # Update mass
-        mass = update_Mass(mass)
-
-        # Calculate weight
-        weight = calc_weight(mass)
-
-        # Calculate drag
-        drag = calc_drag(velocity)
-
-        # Determine thrust based on the current time
-        if time <= timeCurve[len(timeCurve)-1]:
-            thrust = avgThrust  # Use average thrust during the burn time
-        else:
-            thrust = 0
-
-        # Calculate net force
-        netForce = calc_netForce(thrust, weight, drag)
-
-        # Calculate acceleration
-        acceleration = calc_acceleration(netForce, mass)
-
-        # Update velocity
-        velocity = update_Velocity(velocity, acceleration)
-
-        # Update altitude
-        altitude = update_Altitude(altitude, velocity)
-
-        # Store values for plotting
+    while altitude >= -1:
         timeList.append(time)
         altitudeList.append(altitude)
         velocityList.append(velocity)
+        massList.append(mass)
+        accelerationList.append(acceleration)
+        netForceList.append(netForce)
+        weightList.append(weight)
+        thrustList.append(thrust)
+        dragList.append(drag)
+
+        time += timeStep
+        mass = update_Mass(mass)
+        weight = calc_weight(mass)
+        drag = calc_drag(velocity)
+        if time <= timeCurve[len(timeCurve)-1]:
+            thrust = avgThrust
+        else:
+            thrust = 0
+        netForce = calc_netForce(thrust, weight, drag)
+        acceleration = calc_acceleration(netForce, mass)
+        velocity = update_Velocity(velocity, acceleration)
+        altitude = update_Altitude(altitude, velocity)
+        #$fix_Start(altitude, time)
+
+        
+
+def fix_Start(altitude, time):
+    if time<timeCurve[len(timeCurve)-1]:
+        if altitude < 0:
+            altitude = 0
 
 def plot_results():
     plt.figure(figsize=(12, 6))
@@ -130,4 +133,5 @@ def plot_results():
 
 if __name__ == "__main__":
     run_simulation()
-    plot_results()
+    for i in range(len(timeList)):
+        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s², Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N")
