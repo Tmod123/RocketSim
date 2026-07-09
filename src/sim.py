@@ -1,4 +1,4 @@
-#sim.py - V1.4
+#sim.py - V1.5
 
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -27,7 +27,6 @@ def import_Motor_Data(filename):
 
 #Constants
 gravity = 9.81 # m/s^2
-airDensity = 1.225 # kg/m^3
 dragCoefficient = 0.5 # dimensionless
 timeStep = 0.1 # seconds
 
@@ -69,19 +68,21 @@ accelerationList = []
 netForceList = []
 weightList = []
 thrustList = []
-dragList = []   
+dragList = []
+densityList = []
+
 
 
 #Functions
 
 def acceleration(time, altitude, velocity):
-    return netForce(time, velocity) / mass(time)
+    return netForce(time, velocity, altitude) / mass(time)
 
-def netForce(time, velocity):
+def netForce(time, velocity, altitude):
     if velocity >= 0:
-        return thrust(time) - weight(time) - drag(time, velocity)
+        return thrust(time) - weight(time) - drag(time, velocity, altitude)
     else:
-        return thrust(time) - weight(time) + drag(time, velocity)
+        return thrust(time) - weight(time) + drag(time, velocity, altitude)
 
 def thrust(time):
     if time > timeCurve[len(timeCurve)-1]:
@@ -102,18 +103,21 @@ def thrust(time):
 def weight(time):
     return mass(time) * gravity
 
-def drag(time, velocity):
+def drag(time, velocity, altitude):
     if velocity >= 0:
         area = 3.14159 * radius ** 2
-        return 0.5 * airDensity * dragCoefficient * area * velocity ** 2
+        return 0.5 * air_density(altitude) * dragCoefficient * area * velocity ** 2
     else:
-        return 0.5 * airDensity * parachuteDragCoefficient * parachuteArea * velocity ** 2
+        return 0.5 * air_density(altitude) * parachuteDragCoefficient * parachuteArea * velocity ** 2
 
 def mass(time):
     if time > timeCurve[len(timeCurve)-1]:
         return dryMass
     else:
         return dryMass + (massCurve[0]/1000) - avgMassFlowRate * time
+    
+def air_density(altitude):
+    return 1.225 * (1-((0.0065/288.15)*altitude))**((gravity/(287.05*0.0065))-1)
     
 def rk4_step(time, altitude, velocity):
     k1_a = velocity
@@ -141,11 +145,11 @@ def run_simulation():
         velocityList.append(velocity)
         massList.append(mass(time))
         accelerationList.append(acceleration(time, altitude, velocity))
-        netForceList.append(netForce(time, velocity))
+        netForceList.append(netForce(time, velocity, altitude))
         weightList.append(weight(time))
         thrustList.append(thrust(time))
-        dragList.append(drag(time, velocity))
-
+        dragList.append(drag(time, velocity, altitude))
+        densityList.append(air_density(altitude))
         new_altitude, new_velocity = rk4_step(time, altitude, velocity)
         altitude = new_altitude
         velocity = new_velocity
@@ -179,5 +183,5 @@ def plot_results():
 if __name__ == "__main__":
     run_simulation()
     for i in range(len(timeList)):
-        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s², Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N")
+        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s², Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m³")
     plot_results()
