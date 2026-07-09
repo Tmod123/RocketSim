@@ -1,4 +1,6 @@
-#sim.py - V1.5
+#sim.py - V1.6
+
+from ast import While
 
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -7,7 +9,8 @@ import csv
 def import_Motor_Data(filename):
     times = []
     thrusts = []
-
+    times.append(0.000)
+    thrusts.append(0.000)
     with open(filename, newline="") as f:
         reader = csv.reader(f)
 
@@ -28,13 +31,15 @@ def import_Motor_Data(filename):
 #Constants
 gravity = 9.81 # m/s^2
 dragCoefficient = 0.5 # dimensionless
-timeStep = 0.1 # seconds
+timeStep = 0.05 # seconds
 
 #Inputs
-dryMass = 0.0259 # kg
+dryMass = 0.0605 # kg
+fuelMass = 0.011 # kg
 radius = 0.0127 # m
-parachuteArea = 0.060341815 # m^2
-parachuteDragCoefficient = 1.00 # dimensionless
+parachuteArea = 0.0707 # m^2
+parachuteDragCoefficient = 0.80 # dimensionless
+rodLength = 1.0 # m
 #fileName = input("Enter the CSV file containing motor data: ") # CSV file containing motor data
 
 #motor_csv = import_Motor_Data(fileName)
@@ -44,12 +49,12 @@ timeCurve = motor_csv[0]
 thrustCurve = motor_csv[1]
 #timeCurve = [0,0.031,0.092,0.139,0.192,0.209,0.231,0.248,0.292,0.37,0.475,0.671,0.702,0.723,0.85,1.063,1.211,1.242,1.303,1.468,1.656,1.821,1.834,1.847,1.86]
 #thrustCurve = [0,0.946,4.826,9.936,14.09,11.446,7.381,6.151,5.489,4.921,4.448,4.258,4.542,4.164,4.448,4.353,4.353,4.069,4.258,4.353,4.448,4.448,2.933,1.325,0]
-massCurve = [10.8,10.782,10.5664,10.1415,9.36163,9.09576,8.84209,8.7012,8.38754,7.89025,7.28777,6.24272,6.07565,5.96368,5.29384,4.14576,3.35665,3.19675,2.88566,2.0155,1.00217,0.103215,0.04445,0.0105492,0]
+#massCurve = [10.8,10.782,10.5664,10.1415,9.36163,9.09576,8.84209,8.7012,8.38754,7.89025,7.28777,6.24272,6.07565,5.96368,5.29384,4.14576,3.35665,3.19675,2.88566,2.0155,1.00217,0.103215,0.04445,0.0105492,0]
 
 
 #Init Variables
 time = 0
-mass = dryMass + (massCurve[0]/1000)  # Initial mass in kg (dry mass + initial propellant mass)
+mass = dryMass + (fuelMass)  # Initial mass in kg (dry mass + initial propellant mass)
 altitude = 0
 velocity = 0
 acceleration = 0
@@ -57,7 +62,7 @@ netForce = 0
 weight = 0
 thrust = 0
 drag = 0
-avgMassFlowRate = (massCurve[0] / timeCurve[len(timeCurve)-1])/1000  # Average mass flow rate over the burn time    
+#avgMassFlowRate = (massCurve[0] / timeCurve[len(timeCurve)-1])/1000  # Average mass flow rate over the burn time    
 
 #Init Lists
 timeList = []
@@ -85,10 +90,10 @@ def netForce(time, velocity, altitude):
         return thrust(time) - weight(time) + drag(time, velocity, altitude)
 
 def thrust(time):
-    if time > timeCurve[len(timeCurve)-1]:
+    if time > timeCurve[-1]:
         return 0
-    elif time < timeCurve[0]:
-        return thrustCurve[0]*time/timeCurve[0]
+    elif time <= timeCurve[0]:
+        return thrustCurve[1]*time/timeCurve[1]
     else:
         for i in range(len(timeCurve)-1):
             if timeCurve[i] < time <= timeCurve[i+1]:
@@ -110,12 +115,29 @@ def drag(time, velocity, altitude):
     else:
         return 0.5 * air_density(altitude) * parachuteDragCoefficient * parachuteArea * velocity ** 2
 
+#def mass(time):
+#    if time > timeCurve[len(timeCurve)-1]:
+#        return dryMass
+#    else:
+#        return dryMass + (massCurve[0]/1000) - avgMassFlowRate * time
+
 def mass(time):
-    if time > timeCurve[len(timeCurve)-1]:
-        return dryMass
-    else:
-        return dryMass + (massCurve[0]/1000) - avgMassFlowRate * time
-    
+    currentImpulse=0
+    netImpulse=0
+    for i in range(1,len(timeCurve)):
+        if time < timeCurve[0]:
+            currentImpulse = thrust(time)*time
+        elif timeCurve[i] <= time:
+            currentImpulse += (thrustCurve[i]*(timeCurve[i]-timeCurve[i-1]))
+        else:
+            currentImpulse += (thrust(time)*(time-timeCurve[i-1]))
+            break
+    for i in range(1,len(timeCurve)):
+        netImpulse += (thrustCurve[i]*(timeCurve[i]-timeCurve[i-1]))
+    currentFuelMass=fuelMass*(1-(currentImpulse/netImpulse))
+    return dryMass + currentFuelMass
+
+
 def air_density(altitude):
     return 1.225 * (1-((0.0065/288.15)*altitude))**((gravity/(287.05*0.0065))-1)
     
@@ -139,7 +161,7 @@ def rk4_step(time, altitude, velocity):
     
 def run_simulation():
     global time, mass, altitude, velocity, acceleration, netForce, weight, thrust, drag
-    while altitude >= -1:
+    while altitude >= -0.01:
         timeList.append(time)
         altitudeList.append(altitude)
         velocityList.append(velocity)
@@ -181,7 +203,14 @@ def plot_results():
     plt.show()
 
 if __name__ == "__main__":
-    run_simulation()
-    for i in range(len(timeList)):
-        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s², Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m³")
-    plot_results()
+   run_simulation()
+   for i in range(len(timeList)):
+       print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s^2, Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m^3")
+   for i in range(len(altitudeList)-1):
+       if altitudeList[i] < rodLength <= altitudeList[i+1]:
+           rodVelocity = np.sqrt(velocityList[i]**2 + 2 * accelerationList[i] * (rodLength - altitudeList[i]))
+           break
+   print(f"Velocity off rod: {rodVelocity:.2f} m/s, Apogee: {max(altitudeList):.2f} m, Max Velocity: {max(velocityList):.2f} m/s, Max acceleration: {max(accelerationList):.2f} m/s^2, Time to Apogee: {timeList[altitudeList.index(max(altitudeList))]:.2f} s, Flight Time: {timeList[-1]:.2f} s, Ground hit velocity: {velocityList[-1]:.2f} m/s")
+   plot_results()
+
+#print(mass(0.5))
