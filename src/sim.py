@@ -1,6 +1,4 @@
-#sim.py - V1.7
-
-from ast import While
+#sim.py - V2.0
 
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -22,7 +20,7 @@ def import_Motor_Data(filename):
                 times.append(float(row[0]))
                 thrusts.append(float(row[1]))
             except (ValueError, IndexError):
-                print(f"Invalid value in row: {row}")
+                pass
 
         return [times, thrusts]
 
@@ -40,6 +38,8 @@ radius = 0.0127 # m
 parachuteArea = 0.0707 # m^2
 parachuteDragCoefficient = 0.80 # dimensionless
 rodLength = 1.0 # m
+launchAngle = np.radians(5) #radians of x degrees
+windSpeed = 0 # m/s
 #fileName = input("Enter the CSV file containing motor data: ") # CSV file containing motor data
 
 #motor_csv = import_Motor_Data(fileName)
@@ -55,45 +55,67 @@ thrustCurve = motor_csv[1]
 #Init Variables
 time = 0
 mass = dryMass + (fuelMass)  # Initial mass in kg (dry mass + initial propellant mass)
-altitude = 0
-velocity = 0
-acceleration = 0
-netForce = 0
+y_pos = 0
+y_velocity = 0
+x_pos = 0
+x_velocity = 0
+x_acceleration = 0
+y_acceleration = 0
+x_netForce = 0
+y_netForce = 0
 weight = 0
-thrust = 0
-drag = 0
+x_thrust = 0
+y_thrust = 0
+x_drag = 0
+y_drag = 0
+leftRod = False
 #avgMassFlowRate = (massCurve[0] / timeCurve[len(timeCurve)-1])/1000  # Average mass flow rate over the burn time    
 
 #Init Lists
 timeList = []
 massList = []
-altitudeList = []
-velocityList = []
-accelerationList = []
-netForceList = []
+x_posList = []
+y_posList = []
+x_velocityList = []
+y_velocityList = []
+x_accelerationList = []
+y_accelerationList = []
+x_netForceList = []
+y_netForceList = []
 weightList = []
-thrustList = []
-dragList = []
+x_thrustList = []
+y_thrustList = []
+x_dragList = []
+y_dragList = []
 densityList = []
 
 
 
 #Functions
 
-def acceleration(time, altitude, velocity):
-    return netForce(time, velocity, altitude) / mass(time)
+def acceleration_x(time, x_pos, y_pos, x_velocity, y_velocity):
+    return netForce_x(time, x_pos, y_pos, x_velocity, y_velocity) / mass(time, x_pos, y_pos, x_velocity, y_velocity)
 
-def netForce(time, velocity, altitude):
-    if velocity >= 0:
-        return thrust(time) - weight(time) - drag(time, velocity, altitude)
+def acceleration_y(time, x_pos, y_pos, x_velocity, y_velocity):
+    return netForce_y(time, x_pos, y_pos, x_velocity, y_velocity) / mass(time, x_pos, y_pos, x_velocity, y_velocity)
+
+def netForce_x(time, x_pos, y_pos, x_velocity, y_velocity):
+    if y_pos == 0:
+        return thrust_x(time, x_pos, y_pos, x_velocity, y_velocity)
     else:
-        return thrust(time) - weight(time) + drag(time, velocity, altitude)
+        return thrust_x(time, x_pos, y_pos, x_velocity, y_velocity) - drag_x(x_pos, y_pos, x_velocity, y_velocity)    
 
-def thrust(time):
+def netForce_y(time, x_pos, y_pos, x_velocity, y_velocity):
+    if y_pos == 0:
+        return thrust_y(time, x_pos, y_pos, x_velocity, y_velocity)
+    else:
+        return thrust_y(time, x_pos, y_pos, x_velocity, y_velocity) - weight(time, x_pos, y_pos, x_velocity, y_velocity) - drag_y(x_pos, y_pos, x_velocity, y_velocity)
+
+def thrust_x(time, x_pos, y_pos, x_velocity, y_velocity):
     if time > timeCurve[-1]:
         return 0
     elif time <= timeCurve[0]:
-        return thrustCurve[1]*time/timeCurve[1]
+        return (thrustCurve[1]*time/timeCurve[1])*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
     else:
         for i in range(len(timeCurve)-1):
             if timeCurve[i] < time <= timeCurve[i+1]:
@@ -102,91 +124,146 @@ def thrust(time):
                 Thrust1= thrustCurve[i]
                 Thrust2= thrustCurve[i+1]
                 break
-        return Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1)
-
-
-def weight(time):
-    return mass(time) * gravity
-
-def drag(time, velocity, altitude):
-    if velocity >= 0:
-        area = 3.14159 * radius ** 2
-        return 0.5 * air_density(altitude) * dragCoefficient * area * velocity ** 2
+        return (Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1))*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+    
+def thrust_y(time, x_pos, y_pos, x_velocity, y_velocity):
+    if time > timeCurve[-1]:
+        return 0
+    elif time <= timeCurve[0]:
+        return (thrustCurve[1]*time/timeCurve[1])*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
     else:
-        return 0.5 * air_density(altitude) * parachuteDragCoefficient * parachuteArea * velocity ** 2
+        for i in range(len(timeCurve)-1):
+            if timeCurve[i] < time <= timeCurve[i+1]:
+                Time1= timeCurve[i]
+                Time2= timeCurve[i+1]
+                Thrust1= thrustCurve[i]
+                Thrust2= thrustCurve[i+1]
+                break
+        return (Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1))*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
 
-#def mass(time):
-#    if time > timeCurve[len(timeCurve)-1]:
-#        return dryMass
-#    else:
-#        return dryMass + (massCurve[0]/1000) - avgMassFlowRate * time
+def weight(time, x_pos, y_pos, x_velocity, y_velocity):
+    return mass(time, x_pos, y_pos, x_velocity, y_velocity) * gravity
 
-def mass(time):
+def drag_x(x_pos, y_pos, x_velocity, y_velocity):
+    speed = netSpeed(x_velocity, y_velocity)
+    if y_velocity >= 0:
+        area = 3.14159 * radius ** 2
+        return (0.5 * air_density(y_pos) * dragCoefficient * area * speed ** 2)*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+    else:
+        return (0.5 * air_density(y_pos) * parachuteDragCoefficient * parachuteArea * speed ** 2)*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+
+def drag_y(x_pos, y_pos, x_velocity, y_velocity):
+    speed = netSpeed(x_velocity, y_velocity)
+    if y_velocity >= 0:
+        area = 3.14159 * radius ** 2
+        return (0.5 * air_density(y_pos) * dragCoefficient * area * speed ** 2)*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+    else:
+        return (0.5 * air_density(y_pos) * parachuteDragCoefficient * parachuteArea * speed ** 2)*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+
+def mass(time, x_pos, y_pos, x_velocity, y_velocity):
     currentImpulse=0
     netImpulse=0
     for i in range(1,len(timeCurve)):
         if time < timeCurve[0]:
-            currentImpulse = thrust(time)*time
+            currentImpulse = np.sqrt(((thrust_x(time, x_pos, y_pos, x_velocity, y_velocity)*time)**2) + ((thrust_y(time, x_pos, y_pos, x_velocity, y_velocity)*time)**2))
         elif timeCurve[i] <= time:
             currentImpulse += (thrustCurve[i]*(timeCurve[i]-timeCurve[i-1]))
         else:
-            currentImpulse += (thrust(time)*(time-timeCurve[i-1]))
+            currentImpulse += np.sqrt((thrust_y(time, x_pos, y_pos, x_velocity, y_velocity)*(time-timeCurve[i-1]))**2 + (thrust_x(time, x_pos, y_pos, x_velocity, y_velocity)*(time-timeCurve[i-1]))**2)
             break
     for i in range(1,len(timeCurve)):
         netImpulse += (thrustCurve[i]*(timeCurve[i]-timeCurve[i-1]))
     currentFuelMass=fuelMass*(1-(currentImpulse/netImpulse))
     return dryMass + currentFuelMass
 
-
-def air_density(altitude):
-    return 1.225 * (1-((0.0065/288.15)*altitude))**((gravity/(287.05*0.0065))-1)
+def air_density(y_pos):
+    return 1.225 * (1-((0.0065/288.15)*y_pos))**((gravity/(287.05*0.0065))-1)
     
-def rk4_step(time, altitude, velocity):
-    k1_a = velocity
-    k1_v = acceleration(time, altitude, velocity)
+def netSpeed(x_velocity, y_velocity):
+    return np.sqrt((x_velocity**2) + (y_velocity**2))
 
-    k2_a = velocity + k1_v * timeStep/2
-    k2_v = acceleration(time + timeStep/2, altitude + k1_a * timeStep/2, velocity + k1_v * timeStep/2)
+def flight_angle(x_pos, y_pos, x_velocity, y_velocity):
+    if(on_rod(x_pos, y_pos)):
+        return launchAngle
+    else:
+        return np.arctan2(x_velocity, y_velocity)
 
-    k3_a = velocity + k2_v * timeStep/2
-    k3_v = acceleration(time + timeStep/2, altitude + k2_a * timeStep/2, velocity + k2_v * timeStep/2)
+def on_rod(x_pos, y_pos):
+    global leftRod
+    if leftRod:
+        return False
+    elif np.sqrt((x_pos**2) + (y_pos**2)) <= rodLength:
+        return True
+    else:
+        leftRod = True
+        return False
 
-    k4_a = velocity + k3_v * timeStep
-    k4_v = acceleration(time + timeStep, altitude + k3_a * timeStep, velocity + k3_v * timeStep)
+def rk4_step(time, x_pos, y_pos, x_velocity, y_velocity):
+    k1_x = x_velocity
+    k1_y = y_velocity
+    k1_vx = acceleration_x(time, x_pos, y_pos, x_velocity, y_velocity)
+    k1_vy = acceleration_y(time, x_pos, y_pos, x_velocity, y_velocity)
 
-    new_altitude = altitude + (timeStep/6) * (k1_a + 2*k2_a + 2*k3_a + k4_a)
-    new_velocity = velocity + (timeStep/6) * (k1_v + 2*k2_v + 2*k3_v + k4_v)
+    k2_x = x_velocity + k1_vx * timeStep/2
+    k2_y = y_velocity + k1_vy * timeStep/2
+    k2_vx = acceleration_x(time + timeStep/2, x_pos + k1_x * timeStep/2, y_pos + k1_y * timeStep/2, x_velocity + k1_vx * timeStep/2, y_velocity + k1_vy * timeStep/2)
+    k2_vy = acceleration_y(time + timeStep/2, x_pos + k1_x * timeStep/2, y_pos + k1_y * timeStep/2, x_velocity + k1_vx * timeStep/2, y_velocity + k1_vy * timeStep/2)
 
-    return new_altitude, new_velocity
+    k3_x = x_velocity + k2_vx * timeStep/2
+    k3_y = y_velocity + k2_vy * timeStep/2
+    k3_vx = acceleration_x(time + timeStep/2, x_pos + k2_x * timeStep/2, y_pos + k2_y * timeStep/2, x_velocity + k2_vx * timeStep/2, y_velocity + k2_vy * timeStep/2)
+    k3_vy = acceleration_y(time + timeStep/2, x_pos + k2_x * timeStep/2, y_pos + k2_y * timeStep/2, x_velocity + k2_vx * timeStep/2, y_velocity + k2_vy * timeStep/2)
+
+    k4_x = x_velocity + k3_vx * timeStep
+    k4_y = y_velocity + k3_vy * timeStep
+    k4_vx = acceleration_x(time + timeStep, x_pos + k3_x * timeStep, y_pos + k3_y * timeStep, x_velocity + k3_vx * timeStep, y_velocity + k3_vy * timeStep)
+    k4_vy = acceleration_y(time + timeStep, x_pos + k3_x * timeStep, y_pos + k3_y * timeStep, x_velocity + k3_vx * timeStep, y_velocity + k3_vy * timeStep)
+
+    new_x_pos = x_pos + (timeStep/6) * (k1_x + 2*k2_x + 2*k3_x + k4_x)
+    new_y_pos = y_pos + (timeStep/6) * (k1_y + 2*k2_y + 2*k3_y + k4_y)
+    new_x_velocity = x_velocity + (timeStep/6) * (k1_vx + 2*k2_vx + 2*k3_vx + k4_vx)
+    new_y_velocity = y_velocity + (timeStep/6) * (k1_vy + 2*k2_vy + 2*k3_vy + k4_vy)
+
+    return new_x_pos, new_y_pos, new_x_velocity, new_y_velocity
     
 def run_simulation():
-    global time, mass, altitude, velocity, acceleration, netForce, weight, thrust, drag
-    while altitude >= -0.01:
+    global time, x_pos, y_pos, x_velocity, y_velocity
+    while y_pos >= -0.01:
         timeList.append(time)
-        altitudeList.append(altitude)
-        velocityList.append(velocity)
-        massList.append(mass(time))
-        accelerationList.append(acceleration(time, altitude, velocity))
-        netForceList.append(netForce(time, velocity, altitude))
-        weightList.append(weight(time))
-        thrustList.append(thrust(time))
-        dragList.append(drag(time, velocity, altitude))
-        densityList.append(air_density(altitude))
-        new_altitude, new_velocity = rk4_step(time, altitude, velocity)
-        altitude = new_altitude
-        velocity = new_velocity
+        x_posList.append(x_pos)
+        y_posList.append(y_pos)
+        x_velocityList.append(x_velocity)  
+        y_velocityList.append(y_velocity)
+        massList.append(mass(time, x_pos, y_pos, x_velocity, y_velocity))
+        x_accelerationList.append(acceleration_x(time, x_pos, y_pos, x_velocity, y_velocity))
+        y_accelerationList.append(acceleration_y(time, x_pos, y_pos, x_velocity, y_velocity))
+        x_netForceList.append(netForce_x(time, x_pos, y_pos, x_velocity, y_velocity))
+        y_netForceList.append(netForce_y(time, x_pos, y_pos, x_velocity, y_velocity))
+        weightList.append(weight(time, x_pos, y_pos, x_velocity, y_velocity))
+        x_thrustList.append(thrust_x(time, x_pos, y_pos, x_velocity, y_velocity))
+        y_thrustList.append(thrust_y(time, x_pos, y_pos, x_velocity, y_velocity))
+        x_dragList.append(drag_x(x_pos, y_pos, x_velocity, y_velocity))
+        y_dragList.append(drag_y(x_pos, y_pos, x_velocity, y_velocity))
+        densityList.append(air_density(y_pos))
+        new_x_pos, new_y_pos, new_x_velocity, new_y_velocity = rk4_step(time, x_pos, y_pos, x_velocity, y_velocity)
+        x_pos = new_x_pos
+        y_pos = new_y_pos
+        x_velocity = new_x_velocity
+        y_velocity = new_y_velocity
         time += timeStep
         
 
 def plot_results():
     fig, ax1 = plt.subplots(figsize=(10, 8))
-    ax1.plot(timeList, altitudeList, color='blue', label='Altitude (m)')
+    ax1.plot(timeList, y_posList, color='blue', label='Altitude (m)')
     ax1.set_ylabel('Altitude (m)', color='blue')
     ax1.tick_params(axis='y', labelcolor='blue')
 
     ax2 = ax1.twinx()
 
-    ax2.plot(timeList, velocityList, color='red', label='Velocity (m/s)')
+    ax2.plot(timeList, y_velocityList, color='red', label='Velocity (m/s)')
+    ax2.set_ylabel('Velocity (m/s)', color='red')
+    ax2.tick_params(axis='y', labelcolor='red')
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
@@ -199,10 +276,13 @@ def plot_results():
 if __name__ == "__main__":
     run_simulation()
     for i in range(len(timeList)):
-        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s^2, Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m^3")
-    for i in range(len(altitudeList)-1):
-        if altitudeList[i] < rodLength <= altitudeList[i+1]:
-            rodVelocity = np.sqrt(velocityList[i]**2 + 2 * accelerationList[i] * (rodLength - altitudeList[i]))
+        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {y_posList[i]:.2f} m, Velocity: {y_velocityList[i]:.2f} m/s, acceleration: {y_accelerationList[i]:.2f} m/s^2, Net Force: {y_netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {y_thrustList[i]:.2f} N, Drag: {y_dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m^3")
+    rodVelocity = 0
+    for i in range(len(y_posList)-1):
+        dist1=np.sqrt(y_posList[i]**2+x_posList[i]**2)
+        dist2=np.sqrt(y_posList[i+1]**2+x_posList[i+1]**2)
+        if dist1 < rodLength <= dist2:
+            rodVelocity = np.sqrt((y_velocityList[i]**2 + 2 * y_accelerationList[i] * (rodLength*np.cos(launchAngle) - y_posList[i]))+(x_velocityList[i]**2 + 2 * x_accelerationList[i] * (rodLength*np.sin(launchAngle) - x_posList[i])))
             break
-    print(f"Velocity off rod: {rodVelocity:.2f} m/s, Apogee: {max(altitudeList):.2f} m, Max Velocity: {max(velocityList):.2f} m/s, Max acceleration: {max(accelerationList):.2f} m/s^2, Time to Apogee: {timeList[altitudeList.index(max(altitudeList))]:.2f} s, Flight Time: {timeList[-1]:.2f} s, Ground hit velocity: {velocityList[-1]:.2f} m/s")
+    print(f"Velocity off rod: {rodVelocity:.2f} m/s, Apogee: {max(y_posList):.2f} m, Max Velocity: {max(y_velocityList):.2f} m/s, Max acceleration: {max(y_accelerationList):.2f} m/s^2, Time to Apogee: {timeList[y_posList.index(max(y_posList))]:.2f} s, Flight Time: {timeList[-1]:.2f} s, Ground hit velocity: {y_velocityList[-1]:.2f} m/s, Range from launch: {x_posList[-1]:.2f} m")
     plot_results()
