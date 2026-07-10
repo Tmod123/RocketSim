@@ -1,4 +1,4 @@
-#sim.py - V1.6
+#sim.py - V1.7
 
 from ast import While
 
@@ -179,38 +179,30 @@ def run_simulation():
         
 
 def plot_results():
-    plt.figure(figsize=(12, 6))
+    fig, ax1 = plt.subplots(figsize=(10, 8))
+    ax1.plot(timeList, altitudeList, color='blue', label='Altitude (m)')
+    ax1.set_ylabel('Altitude (m)', color='blue')
+    ax1.tick_params(axis='y', labelcolor='blue')
 
-    # Plot Altitude vs Time
-    plt.subplot(1, 2, 1)
-    plt.plot(timeList, altitudeList, label='Altitude (m)', color='blue')
-    plt.title('Altitude vs Time')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Altitude (m)')
-    plt.grid()
-    plt.legend()
+    ax2 = ax1.twinx()
 
-    # Plot Velocity vs Time
-    plt.subplot(1, 2, 2)
-    plt.plot(timeList, velocityList, label='Velocity (m/s)', color='red')
-    plt.title('Velocity vs Time')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Velocity (m/s)')
-    plt.grid()
-    plt.legend()
+    ax2.plot(timeList, velocityList, color='red', label='Velocity (m/s)')
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
 
+    plt.title('Vertical Motion vs Time')
     plt.tight_layout()
     plt.show()
+    
 
 if __name__ == "__main__":
-   run_simulation()
-   for i in range(len(timeList)):
-       print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s^2, Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m^3")
-   for i in range(len(altitudeList)-1):
-       if altitudeList[i] < rodLength <= altitudeList[i+1]:
-           rodVelocity = np.sqrt(velocityList[i]**2 + 2 * accelerationList[i] * (rodLength - altitudeList[i]))
-           break
-   print(f"Velocity off rod: {rodVelocity:.2f} m/s, Apogee: {max(altitudeList):.2f} m, Max Velocity: {max(velocityList):.2f} m/s, Max acceleration: {max(accelerationList):.2f} m/s^2, Time to Apogee: {timeList[altitudeList.index(max(altitudeList))]:.2f} s, Flight Time: {timeList[-1]:.2f} s, Ground hit velocity: {velocityList[-1]:.2f} m/s")
-   plot_results()
-
-#print(mass(0.5))
+    run_simulation()
+    for i in range(len(timeList)):
+        print(f"Time: {timeList[i]:.2f} s, Mass: {massList[i]:.2f} kg, Altitude: {altitudeList[i]:.2f} m, Velocity: {velocityList[i]:.2f} m/s, acceleration: {accelerationList[i]:.2f} m/s^2, Net Force: {netForceList[i]:.2f} N, Weight: {weightList[i]:.2f} N, Thrust: {thrustList[i]:.2f} N, Drag: {dragList[i]:.2f} N, Air Density: {densityList[i]:.2f} kg/m^3")
+    for i in range(len(altitudeList)-1):
+        if altitudeList[i] < rodLength <= altitudeList[i+1]:
+            rodVelocity = np.sqrt(velocityList[i]**2 + 2 * accelerationList[i] * (rodLength - altitudeList[i]))
+            break
+    print(f"Velocity off rod: {rodVelocity:.2f} m/s, Apogee: {max(altitudeList):.2f} m, Max Velocity: {max(velocityList):.2f} m/s, Max acceleration: {max(accelerationList):.2f} m/s^2, Time to Apogee: {timeList[altitudeList.index(max(altitudeList))]:.2f} s, Flight Time: {timeList[-1]:.2f} s, Ground hit velocity: {velocityList[-1]:.2f} m/s")
+    plot_results()
