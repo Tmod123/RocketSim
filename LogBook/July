@@ -7,3 +7,6 @@ Fixed the Sim File and completed up to version 1.3, added source control to VSCo
 
 07/08
 Added lots of stuff to the file today. Finished up to version 1.6. I learned a lot of math concepts and was able to implment them into the project. Next up, id like a fleshed out graphical analysis.
+
+07/09
+Was able to complete the 1.0's and pretty much finished version 2.0. Before I say its fully done i'd like to clean up the code and reduce any recusion to have less strain on the system. Comparing to OpenRocket, I'm going a bit high and a bit further, Ill need to investigate this further. next I plan to research the affect of the CG and CP and implement it into the physics.
