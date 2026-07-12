@@ -1,40 +1,33 @@
-#sim.py - V2.0
+#sim.py - V2.01
 
 import matplotlib.pyplot as plt 
 import numpy as np
 import csv
 
 def import_Motor_Data(filename):
-    times = []
-    thrusts = []
-    times.append(0.000)
-    thrusts.append(0.000)
+    times = [0.000]
+    thrusts = [0.000]
     with open(filename, newline="") as f:
         reader = csv.reader(f)
-
         for row in reader:
             if not row:
                 continue
-
             try:
                 times.append(float(row[0]))
                 thrusts.append(float(row[1]))
             except (ValueError, IndexError):
                 pass
-
         return [times, thrusts]
-
-#print(import_Motor_Data("Estes_E12.csv"))
 
 #Constants
 gravity = 9.81 # m/s^2
-dragCoefficient = 0.5 # dimensionless
 timeStep = 0.05 # seconds
 
 #Inputs
 dryMass = 0.0605 # kg
 fuelMass = 0.011 # kg
 radius = 0.0127 # m
+dragCoefficient = 0.5 # dimensionless
 parachuteArea = 0.0707 # m^2
 parachuteDragCoefficient = 0.80 # dimensionless
 rodLength = 1.0 # m
@@ -44,32 +37,16 @@ windSpeed = 0 # m/s
 
 #motor_csv = import_Motor_Data(fileName)
 motor_csv = import_Motor_Data("Motors/Estes_C6.csv")
-
 timeCurve = motor_csv[0]
 thrustCurve = motor_csv[1]
-#timeCurve = [0,0.031,0.092,0.139,0.192,0.209,0.231,0.248,0.292,0.37,0.475,0.671,0.702,0.723,0.85,1.063,1.211,1.242,1.303,1.468,1.656,1.821,1.834,1.847,1.86]
-#thrustCurve = [0,0.946,4.826,9.936,14.09,11.446,7.381,6.151,5.489,4.921,4.448,4.258,4.542,4.164,4.448,4.353,4.353,4.069,4.258,4.353,4.448,4.448,2.933,1.325,0]
-#massCurve = [10.8,10.782,10.5664,10.1415,9.36163,9.09576,8.84209,8.7012,8.38754,7.89025,7.28777,6.24272,6.07565,5.96368,5.29384,4.14576,3.35665,3.19675,2.88566,2.0155,1.00217,0.103215,0.04445,0.0105492,0]
-
 
 #Init Variables
 time = 0
-mass = dryMass + (fuelMass)  # Initial mass in kg (dry mass + initial propellant mass)
 y_pos = 0
 y_velocity = 0
 x_pos = 0
 x_velocity = 0
-x_acceleration = 0
-y_acceleration = 0
-x_netForce = 0
-y_netForce = 0
-weight = 0
-x_thrust = 0
-y_thrust = 0
-x_drag = 0
-y_drag = 0
 leftRod = False
-#avgMassFlowRate = (massCurve[0] / timeCurve[len(timeCurve)-1])/1000  # Average mass flow rate over the burn time    
 
 #Init Lists
 timeList = []
@@ -93,110 +70,90 @@ densityList = []
 
 #Functions
 
-def acceleration_x(time, x_pos, y_pos, x_velocity, y_velocity):
-    return netForce_x(time, x_pos, y_pos, x_velocity, y_velocity) / mass(time, x_pos, y_pos, x_velocity, y_velocity)
-
-def acceleration_y(time, x_pos, y_pos, x_velocity, y_velocity):
-    return netForce_y(time, x_pos, y_pos, x_velocity, y_velocity) / mass(time, x_pos, y_pos, x_velocity, y_velocity)
-
-def netForce_x(time, x_pos, y_pos, x_velocity, y_velocity):
-    if y_pos == 0:
-        return thrust_x(time, x_pos, y_pos, x_velocity, y_velocity)
-    else:
-        return thrust_x(time, x_pos, y_pos, x_velocity, y_velocity) - drag_x(x_pos, y_pos, x_velocity, y_velocity)    
-
-def netForce_y(time, x_pos, y_pos, x_velocity, y_velocity):
-    if y_pos == 0:
-        return thrust_y(time, x_pos, y_pos, x_velocity, y_velocity)
-    else:
-        return thrust_y(time, x_pos, y_pos, x_velocity, y_velocity) - weight(time, x_pos, y_pos, x_velocity, y_velocity) - drag_y(x_pos, y_pos, x_velocity, y_velocity)
-
-def thrust_x(time, x_pos, y_pos, x_velocity, y_velocity):
-    if time > timeCurve[-1]:
-        return 0
-    elif time <= timeCurve[0]:
-        return (thrustCurve[1]*time/timeCurve[1])*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-    else:
-        for i in range(len(timeCurve)-1):
-            if timeCurve[i] < time <= timeCurve[i+1]:
-                Time1= timeCurve[i]
-                Time2= timeCurve[i+1]
-                Thrust1= thrustCurve[i]
-                Thrust2= thrustCurve[i+1]
-                break
-        return (Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1))*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-    
-def thrust_y(time, x_pos, y_pos, x_velocity, y_velocity):
-    if time > timeCurve[-1]:
-        return 0
-    elif time <= timeCurve[0]:
-        return (thrustCurve[1]*time/timeCurve[1])*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-    else:
-        for i in range(len(timeCurve)-1):
-            if timeCurve[i] < time <= timeCurve[i+1]:
-                Time1= timeCurve[i]
-                Time2= timeCurve[i+1]
-                Thrust1= thrustCurve[i]
-                Thrust2= thrustCurve[i+1]
-                break
-        return (Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1))*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-
-def weight(time, x_pos, y_pos, x_velocity, y_velocity):
-    return mass(time, x_pos, y_pos, x_velocity, y_velocity) * gravity
-
-def drag_x(x_pos, y_pos, x_velocity, y_velocity):
-    speed = netSpeed(x_velocity, y_velocity)
-    if y_velocity >= 0:
-        area = 3.14159 * radius ** 2
-        return (0.5 * air_density(y_pos) * dragCoefficient * area * speed ** 2)*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-    else:
-        return (0.5 * air_density(y_pos) * parachuteDragCoefficient * parachuteArea * speed ** 2)*np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-
-def drag_y(x_pos, y_pos, x_velocity, y_velocity):
-    speed = netSpeed(x_velocity, y_velocity)
-    if y_velocity >= 0:
-        area = 3.14159 * radius ** 2
-        return (0.5 * air_density(y_pos) * dragCoefficient * area * speed ** 2)*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-    else:
-        return (0.5 * air_density(y_pos) * parachuteDragCoefficient * parachuteArea * speed ** 2)*np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
-
-def mass(time, x_pos, y_pos, x_velocity, y_velocity):
-    currentImpulse=0
-    netImpulse=0
-    for i in range(1,len(timeCurve)):
-        if time < timeCurve[0]:
-            currentImpulse = np.sqrt(((thrust_x(time, x_pos, y_pos, x_velocity, y_velocity)*time)**2) + ((thrust_y(time, x_pos, y_pos, x_velocity, y_velocity)*time)**2))
-        elif timeCurve[i] <= time:
-            currentImpulse += (thrustCurve[i]*(timeCurve[i]-timeCurve[i-1]))
-        else:
-            currentImpulse += np.sqrt((thrust_y(time, x_pos, y_pos, x_velocity, y_velocity)*(time-timeCurve[i-1]))**2 + (thrust_x(time, x_pos, y_pos, x_velocity, y_velocity)*(time-timeCurve[i-1]))**2)
-            break
-    for i in range(1,len(timeCurve)):
-        netImpulse += (thrustCurve[i]*(timeCurve[i]-timeCurve[i-1]))
-    currentFuelMass=fuelMass*(1-(currentImpulse/netImpulse))
-    return dryMass + currentFuelMass
-
 def air_density(y_pos):
     return 1.225 * (1-((0.0065/288.15)*y_pos))**((gravity/(287.05*0.0065))-1)
-    
+
 def netSpeed(x_velocity, y_velocity):
     return np.sqrt((x_velocity**2) + (y_velocity**2))
-
-def flight_angle(x_pos, y_pos, x_velocity, y_velocity):
-    if(on_rod(x_pos, y_pos)):
-        return launchAngle
-    else:
-        return np.arctan2(x_velocity, y_velocity)
 
 def on_rod(x_pos, y_pos):
     global leftRod
     if leftRod:
         return False
-    elif np.sqrt((x_pos**2) + (y_pos**2)) <= rodLength:
+    if np.sqrt((x_pos**2) + (y_pos**2)) <= rodLength:
         return True
+    leftRod = True
+    return False
+
+def flight_angle(x_pos, y_pos, x_velocity, y_velocity):
+    if(on_rod(x_pos, y_pos)):
+        return launchAngle
+    return np.arctan2(x_velocity, y_velocity)
+
+def thrust_magnitude(time):
+    if time > timeCurve[-1]:
+        return 0
+    if time <= timeCurve[0]:
+        return (thrustCurve[1]*time/timeCurve[1])
+    for i in range(len(timeCurve)-1):
+        if timeCurve[i] < time <= timeCurve[i+1]:
+            Time1= timeCurve[i]
+            Time2= timeCurve[i+1]
+            Thrust1= thrustCurve[i]
+            Thrust2= thrustCurve[i+1]
+            return (Thrust1 + (Thrust2 - Thrust1) * (time - Time1) / (Time2 - Time1))
+    return 0
+
+def x_component(magnitude, x_pos, y_pos, x_velocity, y_velocity):
+    return magnitude * np.sin(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+
+def y_component(magnitude, x_pos, y_pos, x_velocity, y_velocity):
+    return magnitude * np.cos(flight_angle(x_pos, y_pos, x_velocity, y_velocity))
+
+def acceleration_x(time, x_pos, y_pos, x_velocity, y_velocity):
+    return netForce_x(time, x_pos, y_pos, x_velocity, y_velocity) / mass(time)
+
+def acceleration_y(time, x_pos, y_pos, x_velocity, y_velocity):
+    return netForce_y(time, x_pos, y_pos, x_velocity, y_velocity) / mass(time)
+
+def netForce_x(time, x_pos, y_pos, x_velocity, y_velocity):
+    if y_pos == 0:
+        return x_component(thrust_magnitude(time), x_pos, y_pos, x_velocity, y_velocity)
     else:
-        leftRod = True
-        return False
+        return x_component(thrust_magnitude(time), x_pos, y_pos, x_velocity, y_velocity) - x_component(drag_magnitude(x_pos, y_pos, x_velocity, y_velocity),x_pos, y_pos, x_velocity, y_velocity)    
+
+def netForce_y(time, x_pos, y_pos, x_velocity, y_velocity):
+    if y_pos == 0:
+        return y_component(thrust_magnitude(time), x_pos, y_pos, x_velocity, y_velocity)
+    else:
+        return y_component(thrust_magnitude(time), x_pos, y_pos, x_velocity, y_velocity) - weight(time) - y_component(drag_magnitude(x_pos, y_pos, x_velocity, y_velocity),x_pos, y_pos, x_velocity, y_velocity)
+
+def drag_magnitude(x_pos, y_pos, x_velocity, y_velocity):
+    speed = netSpeed(x_velocity, y_velocity)
+    if y_velocity >= 0:
+        A, cd = 3.14159 * radius ** 2, dragCoefficient        
+    else:
+        A, cd = parachuteArea, parachuteDragCoefficient
+    return (0.5 * air_density(y_pos) * cd * A * speed ** 2)
+
+def weight(time):
+    return mass(time) * gravity
+
+def mass(time):
+    currentImpulse=0
+    netImpulse=0
+    for i in range(1,len(timeCurve)):
+        if time < timeCurve[0]:
+            currentImpulse = thrust_magnitude(time) * time
+        elif timeCurve[i] <= time:
+            currentImpulse += 0.5*(thrustCurve[i]+thrustCurve[i-1])*(timeCurve[i]-timeCurve[i-1])
+        else:
+            currentImpulse += 0.5*(thrust_magnitude(time)+thrustCurve[i-1]) * (time-timeCurve[i-1])
+            break
+    for i in range(1,len(timeCurve)):
+        netImpulse += (0.5*(thrustCurve[i]+thrustCurve[i-1])*(timeCurve[i]-timeCurve[i-1]))
+    currentFuelMass=fuelMass*(1-(currentImpulse/netImpulse))
+    return dryMass + currentFuelMass
 
 def rk4_step(time, x_pos, y_pos, x_velocity, y_velocity):
     k1_x = x_velocity
@@ -229,21 +186,39 @@ def rk4_step(time, x_pos, y_pos, x_velocity, y_velocity):
 def run_simulation():
     global time, x_pos, y_pos, x_velocity, y_velocity
     while y_pos >= -0.01:
+
+        current_mass = mass(time)
+        current_thrust_x = x_component(thrust_magnitude(time), x_pos, y_pos, x_velocity, y_velocity)
+        current_thrust_y = y_component(thrust_magnitude(time), x_pos, y_pos, x_velocity, y_velocity)
+        current_weight = current_mass * gravity
+        current_drag_x = x_component(drag_magnitude(x_pos, y_pos, x_velocity, y_velocity), x_pos, y_pos, x_velocity, y_velocity)
+        current_drag_y = y_component(drag_magnitude(x_pos, y_pos, x_velocity, y_velocity), x_pos, y_pos, x_velocity, y_velocity)
+
+        if y_pos == 0:
+            current_netForce_x = current_thrust_x
+            current_netForce_y = current_thrust_y 
+        else:
+            current_netForce_x = current_thrust_x - current_drag_x
+            current_netForce_y = current_thrust_y - current_weight - current_drag_y
+
+        current_acceleration_x = current_netForce_x / current_mass
+        current_acceleration_y = current_netForce_y / current_mass
+
         timeList.append(time)
         x_posList.append(x_pos)
         y_posList.append(y_pos)
         x_velocityList.append(x_velocity)  
         y_velocityList.append(y_velocity)
-        massList.append(mass(time, x_pos, y_pos, x_velocity, y_velocity))
-        x_accelerationList.append(acceleration_x(time, x_pos, y_pos, x_velocity, y_velocity))
-        y_accelerationList.append(acceleration_y(time, x_pos, y_pos, x_velocity, y_velocity))
-        x_netForceList.append(netForce_x(time, x_pos, y_pos, x_velocity, y_velocity))
-        y_netForceList.append(netForce_y(time, x_pos, y_pos, x_velocity, y_velocity))
-        weightList.append(weight(time, x_pos, y_pos, x_velocity, y_velocity))
-        x_thrustList.append(thrust_x(time, x_pos, y_pos, x_velocity, y_velocity))
-        y_thrustList.append(thrust_y(time, x_pos, y_pos, x_velocity, y_velocity))
-        x_dragList.append(drag_x(x_pos, y_pos, x_velocity, y_velocity))
-        y_dragList.append(drag_y(x_pos, y_pos, x_velocity, y_velocity))
+        massList.append(current_mass)
+        x_accelerationList.append(current_acceleration_x)
+        y_accelerationList.append(current_acceleration_y)
+        x_netForceList.append(current_netForce_x)
+        y_netForceList.append(current_netForce_y)
+        weightList.append(current_weight)
+        x_thrustList.append(current_thrust_x)
+        y_thrustList.append(current_thrust_y)
+        x_dragList.append(current_drag_x)
+        y_dragList.append(current_drag_y)
         densityList.append(air_density(y_pos))
         new_x_pos, new_y_pos, new_x_velocity, new_y_velocity = rk4_step(time, x_pos, y_pos, x_velocity, y_velocity)
         x_pos = new_x_pos
