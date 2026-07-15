@@ -226,7 +226,7 @@ def rk4_step(time, x_pos, y_pos, x_velocity, y_velocity, theta, omega):
         new_omega = 0
     
     if new_y_velocity < 0:
-        new_theta = np.arctan2(new_x_velocity,new_y_velocity)
+        new_theta = theta
         new_omega = 0
 
     new_theta = (new_theta + np.pi) % (2*np.pi) - np.pi
@@ -269,7 +269,7 @@ def run_simulation():
         y_posList.append(y_pos)
         x_velocityList.append(x_velocity)  
         y_velocityList.append(y_velocity)
-        thetaList.append(theta)
+        thetaList.append(np.degrees(theta))
         omegaList.append(omega)
         alphaList.append(current_alpha)
         torqueList.append(current_torque)
@@ -333,7 +333,7 @@ if __name__ == "__main__":
               Thrust: {y_thrustList[i]:.3f} N, \
               x_drag: {x_dragList[i]:.3f} N, \
               Drag: {y_dragList[i]:.3f} N, \
-              theta: {thetaList[i]:.3f} rad, \
+              theta: {thetaList[i]:.3f} degrees, \
               omega: {omegaList[i]:.3f} rad/s, \
               alpha: {alphaList[i]:.3f} rad/s^2, \
               torque: {torqueList[i]:.3f} N*m, \
