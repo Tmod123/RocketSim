@@ -42,7 +42,7 @@ v2.1
 Input CG/CP and use margin.
 
 v2.2
-varying Cd according to mach
+varying CG from fuel loss
 
 v2.3
 add rocket model geometry input and use barrowman to find CP.
