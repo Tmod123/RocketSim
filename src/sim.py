@@ -1,4 +1,4 @@
-#sim.py - V2.1
+#sim.py - V2.1.1
 
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -35,8 +35,10 @@ rodLength = 1.0 # m
 launchAngle = np.radians(5) #radians of x degrees
 windSpeed = 0 # m/s
 rocketLength = 0.425 # m
-CG = 0.26 # m from the nose tip
+CG_dry = 0.24 # m from the nose tip
+CG_wet = 0.26
 CP = 0.32 # m from the nose tip
+CT = (CG_wet*(dryMass+fuelMass)-CG_dry*dryMass)/(fuelMass)
 
 CN_alpha = 11.97 #pulled from OR
 
@@ -85,9 +87,9 @@ densityList = []
 
 #Functions
 
-def moment_of_inertia(current_mass, CG):
+def moment_of_inertia(current_mass, time):
     I_center = (1/12) * current_mass * rocketLength ** 2 #assuming uniform density for now
-    d = CG - rocketLength/2 #distance between center and CG
+    d = centerOfGravity(time) - rocketLength/2 #distance between center and CG
     return I_center + current_mass * d**2 #parallel axis theorem
     
 def angle_of_attack(theta, x_velocity, y_velocity):
@@ -98,11 +100,11 @@ def normal_force(theta, y_pos, x_velocity, y_velocity):
     Area = np.pi * radius**2
     return dynamicPressure * Area * CN_alpha * angle_of_attack(theta, x_velocity,y_velocity) 
 
-def yaw_torque(theta, y_pos, x_velocity, y_velocity):
-    return normal_force(theta, y_pos, x_velocity, y_velocity) * (CP-CG)
+def yaw_torque(theta, y_pos, x_velocity, y_velocity, time):
+    return normal_force(theta, y_pos, x_velocity, y_velocity) * (CP-centerOfGravity(time))
 
 def alpha(time, theta, y_pos, x_velocity, y_velocity):
-    return yaw_torque(theta, y_pos, x_velocity, y_velocity) / moment_of_inertia(mass(time), CG)
+    return yaw_torque(theta, y_pos, x_velocity, y_velocity, time) / moment_of_inertia(mass(time),time)
 
 def air_density(y_pos):
     return 1.225 * (1-((0.0065/288.15)*y_pos))**((gravity/(287.05*0.0065))-1)
@@ -184,6 +186,10 @@ def mass(time):
     currentFuelMass=fuelMass*(1-(currentImpulse/netImpulse))
     return dryMass + currentFuelMass
 
+def centerOfGravity(time):
+    return (CG_dry*dryMass+CT*(mass(time)-dryMass))/(mass(time))
+    
+
 def rk4_step(time, x_pos, y_pos, x_velocity, y_velocity, theta, omega):
     k1_x = x_velocity
     k1_y = y_velocity
@@ -246,7 +252,7 @@ def run_simulation():
         current_drag_x = x_component(current_drag, np.arctan2(x_velocity, y_velocity))
         current_drag_y = y_component(current_drag, np.arctan2(x_velocity, y_velocity))
         current_normalForce = normal_force(theta, y_pos, x_velocity, y_velocity)
-        current_inertia = moment_of_inertia(current_mass, CG)
+        current_inertia = moment_of_inertia(current_mass, centerOfGravity(time))
         
         if y_pos == 0:
             current_netForce_x = current_thrust_x
@@ -258,7 +264,7 @@ def run_simulation():
         if on_rod(x_pos, y_pos):
             current_torque = 0
         else:
-            current_torque = yaw_torque(theta,y_pos,x_velocity,y_velocity)
+            current_torque = yaw_torque(theta,y_pos,x_velocity,y_velocity,time)
 
         current_acceleration_x = current_netForce_x / current_mass
         current_acceleration_y = current_netForce_y / current_mass
