@@ -1,4 +1,4 @@
-#sim.py - V2.1.1
+#sim.py - V2.3
 
 import matplotlib.pyplot as plt 
 import numpy as np
@@ -25,6 +25,79 @@ gravity = 9.81 # m/s^2
 timeStep = 0.05 # seconds
 
 #Inputs
+
+#rocket Geometry
+L=0.10
+NBD = 0.025
+d11 = 0.0
+d21 = 0.0
+d12 = 0.0
+d22 = 0.0
+Lt1 = 0.0
+Lt2 = 0.0
+xs1 = 0.0
+xs2 = 0.0
+a1 = 0.0508
+b1 = 0.0508
+a2 = 0.0
+b2 = 0.0
+f1 = 3.0
+f2 = 0.0
+Y1 = 0.03931
+Y2 = 0.0
+R1 = 0.0125
+R2 = 0.0
+Xf1 = 0.3492
+Xf2 = 0.0
+m1 = 0.0254
+m2 = 0.0
+s1 = 0.03
+s2 = 0.0
+
+finSets = 1
+transitions = 0
+noseType = "ogive" #cone, ogive, paraboloid, ellipsoid
+
+def centerOfPressure():
+    CN_n = 2
+    if finSets >= 1:
+        if finSets == 2:
+            CN_f2 = (1+(R2)/(s2+R2)) * ((4*f2*(s2/NBD)**2)/(1+np.sqrt(1+((2*Y2)/(a2+b2))**2)))
+            Pf2 = CN_f2 * (Xf2+(m2*(a2+2*b2)/(3*(a2+b2)))+(1/6)*(a2+b2-(a2*b2)/(a2+b2)))
+        else:
+            CN_f2, Pf2 = 0, 0
+        CN_f1 = (1+(R1)/(s1+R1)) * ((4*f1*(s1/NBD)**2)/(1+np.sqrt(1+((2*Y1)/(a1+b1))**2)))
+        Pf1 = CN_f1 * (Xf1+(m1*(a1+2*b1)/(3*(a1+b1)))+(1/6)*(a1+b1-(a1*b1)/(a1+b1)))
+    else:
+        CN_f1, Pf1, CN_f2, Pf2 = 0, 0, 0, 0
+
+    if transitions >= 1:
+        if transitions == 2:
+            CN_s2 = 2*((d22/NBD)**2 - (d12/NBD)**2)
+            Ps2 = CN_s2 * (xs2+(Lt2/3)*(1+(1-(d12/d22))/(1-(d12/d22)**2)))
+        else:
+            CN_s2, Ps2 = 0, 0
+        CN_s1 = 2*((d21/NBD)**2 - (d11/NBD)**2)
+        Ps1 = CN_s1 * (xs1+(Lt1/3)*(1+(1-(d11/d21))/(1-(d11/d21)**2)))
+    else:
+        CN_s1, Ps1, CN_s2, Ps2 = 0, 0, 0, 0
+
+    if noseType == "cone":
+        Pn = CN_n * (0.6667*L)
+    elif noseType == "ogive":
+        Pn = CN_n * (0.466*L)
+    elif noseType == "paraboloid":
+        Pn = CN_n * (0.5*L)
+    elif noseType == "ellipsoid":
+        Pn = CN_n * (0.3333*L)
+    else:
+        Pn = 0
+
+    netNormalForce = CN_n + CN_s1 + CN_s2 + CN_f1 + CN_f2
+    netMoment = Pn + Ps1 + Ps2 + Pf1 + Pf2
+    return netMoment/netNormalForce
+
+#everyting else
 dryMass = 0.0605 # kg
 fuelMass = 0.011 # kg
 radius = 0.0127 # m
@@ -37,7 +110,7 @@ windSpeed = 0 # m/s
 rocketLength = 0.425 # m
 CG_dry = 0.24 # m from the nose tip
 CG_wet = 0.26
-CP = 0.32 # m from the nose tip
+CP = centerOfPressure() # m from the nose tip
 CT = (CG_wet*(dryMass+fuelMass)-CG_dry*dryMass)/(fuelMass)
 
 CN_alpha = 11.97 #pulled from OR
@@ -85,7 +158,23 @@ densityList = []
 
 
 
+
 #Functions
+def centerOfPressure():
+    CN_n = 2
+    CN_s1 = 2*((d21/NBD)**2 - (d11/NBD)^2)
+    CN_s2 = 2*((d22/NBD)**2 - (d12/NBD)^2)
+    CN_f1 = (1+(R1)/(s1+R1)) * ((4*f1*(s1/NBD)**2)/(1+np.sqrt(1+((2*Y1)/(a1+b1))**2)))
+    CN_f2 = (1+(R2)/(s2+R2)) * ((4*f2*(s2/NBD)**2)/(1+np.sqrt(1+((2*Y2)/(a2+b2))**2)))
+    Pn = CN_n * (0.466*L)
+    Ps1 = CN_s1 * (xs1+(Lt1/3)*(1+(1-(d11/d21))/(1-(d11/d21)**2)))
+    Ps2 = CN_s2 * (xs2+(Lt2/3)*(1+(1-(d12/d22))/(1-(d12/d22)**2)))
+    Pf1 = CN_f1 * (Xf1+(m1*(a1+2*b1)/(3*(a1+b1)))+(1/6)*(a1+b1-(a1*b1)/(a1+b1)))
+    Pf2 = CN_f2 * (Xf2+(m2*(a2+2*b2)/(3*(a2+b2)))+(1/6)*(a2+b2-(a2*b2)/(a2+b2)))
+
+    netNormalForce = CN_n + CN_s1 + CN_s2 + CN_f1 + CN_f2
+    netMoment = Pn + Ps1 + Ps2 + Pf1 + Pf2
+    return netMoment/netNormalForce
 
 def moment_of_inertia(current_mass, time):
     I_center = (1/12) * current_mass * rocketLength ** 2 #assuming uniform density for now
