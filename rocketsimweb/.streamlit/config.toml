@@ -1,0 +1,8 @@
+[theme]
+primaryColor = "#9A7787"         # Color for interactive elements like buttons and sliders
+backgroundColor = "#060623"      # Primary background color of the app
+secondaryBackgroundColor = "#000014" # Sidebar and widget background color
+textColor = "#FFFFFF"            # Main text color
+font = "monospace"              # Font family (sans serif, serif, or monospace)
+baseRadius = "large"             # Roundness of widgets (none, small, large, full)
+#hello neighbor Ian, Seth and Fayt were here to fix when you threw a peach at the website
