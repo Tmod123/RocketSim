@@ -8,7 +8,7 @@ import sys
 def import_Motor_Data(filename):
     times = [0.000]
     thrusts = [0.000]
-    with open(filename, newline="") as f:
+    with open(filename, newline='') as f:
         reader = csv.reader(f)
         for row in reader:
             if not row:
