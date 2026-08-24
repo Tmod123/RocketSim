@@ -19,6 +19,8 @@ if "sim" not in streamlit.session_state:
 def run_button_pressed():
     rocket = streamlit.session_state.sim
     rocket.run_simulation()
+    summary = rocket.get_summary()
+    streamlit.write(summary)
     # Keep results in memory (session_state), not a shared file on disk.
     streamlit.session_state.results = rocket.get_results()
 
