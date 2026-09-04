@@ -14,8 +14,9 @@ def import_Motor_Data(filename):
             if not row:
                 continue
             try:
-                times.append(float(row[0]))
-                thrusts.append(float(row[1]))
+                if float(row[1]) != 0.000:
+                    times.append(float(row[0]))
+                    thrusts.append(float(row[1]))
             except (ValueError, IndexError):
                 pass
         return [times, thrusts]
@@ -23,78 +24,68 @@ def import_Motor_Data(filename):
 #Constants
 gravity = 9.81 # m/s^2
 timeStep = 0.05 # seconds
-
-#Inputs
-
-#rocket Geometry
-L=0.10 #length of nose cone in meters
-NBD = 0.025 #NoseBaseDiameter in meters
-d11 = 0.0 #Upper diameter of conic transition 1 (m)
-d21 = 0.0 #lower diameter of conic transition 1 (m)
-d12 = 0.0 #Upper diameter of conic transition 2 (m)
-d22 = 0.0 #lower diameter of conic transition 2 (m)
-Lt1 = 0.0 #Length of transition 1 (m)
-Lt2 = 0.0 #Length of transition 2 (m)
-xs1 = 0.0 #Nose Tip to top of shoulder 1 (m)
-xs2 = 0.0 #Nose Tip to top of shoulder 2 (m)
-a1 = 0.0508 #Fin Root chord 1 (m)
-b1 = 0.0508 #Fin Tip chord 1 (m)
-a2 = 0.0 #Fin Root chord 2 (m)
-b2 = 0.0 #Fin Tip chord 2 (m)
-f1 = 3.0 #Number of fins for set 1
-f2 = 0.0 #Number of fins for set 2
-Y1 = 0.03931 #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
-Y2 = 0.0 #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
-R1 = 0.0125 #Radius at body of Fin Base 1 (m)
-R2 = 0.0 #Radius at body of Fin Base 2 (m)
-Xf1 = 0.3492 #Distance from nosetip to top of fin root Chord Leading Edge 1 (m)
-Xf2 = 0.0 #Distance from nosetip to top of fin root Chord Leading Edge 2 (m)
-m1 = 0.0254 #Vertical distance from rootLeading to top of Fin Tip Leading Edge 1 (m)
-m2 = 0.0 #Vertical distance from rootLeading to top of Fin Tip Leading Edge 2 (m)
-s1 = 0.03 #Fin Semi-Span 1 (m)
-s2 = 0.0 #Fin Semi-Span 2 (m)
+initialTemperature = 20 #degrees Celsius
+initialAltitude = 220 #meters above sea level
+initialPressure = 101550 #Pa
+airMolarMass = 0.0289644 #kg/mol
+universeGasConstant = 8.31447 #J/(mol*K)
+SpecificGasConstant = 287.05 #J/(kg*K)
+temperatureLapseRate = 0.0065 #K/m
+hellMannCoefficient = 0.34 #constant for Neutral air above human-inhibited area
+AdiabaticIndex = 1.4 #unitless & constant for our purpose, value for air
+initWindSpeed = 0 #m/s
+windHeading = 0 #radians, 0 is wind to the north, pi/2 is wind to the east, pi is wind to the south, 3pi/2 is wind to the west
+surfaceRoughness = 60*10**-6 #meters, first number is micrometer, you have to look in a table or guesstimate for this value. 
+launchGuideRoughness = 60*10**-9
+numberOfFins = 3
+rocketLength = 0.425 #meters
+finThickness = 0.002 #meters
+rootChord = 0.0508 #meters
+tipChord = 0.0508 #meters
+sweepLength = 0.0254 #meters
+leadingEdgeAngle = np.radians(40.3)
+finSpan = 0.03 #meters
+Y1 = np.sqrt(finSpan**2+(sweepLength+tipChord/2-rootChord/2)**2) #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
+leadingEdgeToNosecone = 0.349 #meters 
+bodyDiameter = 0.025 #meters
+bodyRadius = bodyDiameter/2 #meters
+motorDiameter = 0.018 # meters also just the inner body tube innerdiameter
+noseLength = 0.1 #meters
+A_fin = (finSpan/2)*(tipChord+rootChord)
+finenessRatio = rocketLength/bodyDiameter #unitless, ratio of the length of the rocket to the diameter of the rocket
+meanAerodynamicChordLengthOfFin = (2/3) * (rootChord + tipChord - (rootChord*tipChord)/(rootChord + tipChord)) #meters, this is a typical value for a fin
+A_wet_nose = (np.pi/(2*bodyRadius**2))*(bodyRadius*noseLength*(bodyRadius**2-noseLength**2)+((bodyRadius**2+noseLength**2)**2)*np.atan(bodyRadius/noseLength)) #meters^2, this is the wetted area of an ogive nosecone of the rocket
+noseVolume = (np.pi/(24*bodyRadius**3))*(6*noseLength*bodyRadius**5+6*bodyRadius*noseLength**5+4*(bodyRadius**3)*(noseLength**3)+6*(bodyRadius**2-noseLength**2)*(bodyRadius**2+noseLength**2)**2*np.arctan(bodyRadius/noseLength))
+A_wet_body = np.pi * bodyDiameter * (rocketLength-noseLength) + A_wet_nose #meters^2, this is the wetted area of the body of the rocket
+A_wet_fins = numberOfFins*(finSpan*(rootChord+tipChord)+finThickness*(rootChord+tipChord+np.sqrt(sweepLength**2 + finSpan**2)+np.sqrt((sweepLength+tipChord-rootChord)**2+finSpan**2))) #meters^2, this is the wetted area of the fins of the rocket
+A_ref = np.pi * (bodyRadius**2) #meters^2, this is the reference area of the rocket, which is the cross-sectional area of the rocket body
+jointAngle = 0 #radians, this is the angle of the joint between the body and the fin, which is typically 0 for a rocket with fins that are perpendicular to the body
+launchGuideLength = 0.035 #meters
+launchGuideOuterDiameter = 0.007 # meters
+launchGuideInnerDiameter = 0.005 #meters
 
 finSets = 1
 transitions = 0
 noseType = "ogive" #cone, ogive, paraboloid, ellipsoid
 
-def centerOfPressure():
+def initcenterOfPressure():
     CN_n = 2
-    if finSets >= 1:
-        if finSets == 2:
-            CN_f2 = (1+(R2)/(s2+R2)) * ((4*f2*(s2/NBD)**2)/(1+np.sqrt(1+((2*Y2)/(a2+b2))**2)))
-            Pf2 = CN_f2 * (Xf2+(m2*(a2+2*b2)/(3*(a2+b2)))+(1/6)*(a2+b2-(a2*b2)/(a2+b2)))
-        else:
-            CN_f2, Pf2 = 0, 0
-        CN_f1 = (1+(R1)/(s1+R1)) * ((4*f1*(s1/NBD)**2)/(1+np.sqrt(1+((2*Y1)/(a1+b1))**2)))
-        Pf1 = CN_f1 * (Xf1+(m1*(a1+2*b1)/(3*(a1+b1)))+(1/6)*(a1+b1-(a1*b1)/(a1+b1)))
-    else:
-        CN_f1, Pf1, CN_f2, Pf2 = 0, 0, 0, 0
-
-    if transitions >= 1:
-        if transitions == 2:
-            CN_s2 = 2*((d22/NBD)**2 - (d12/NBD)**2)
-            Ps2 = CN_s2 * (xs2+(Lt2/3)*(1+(1-(d12/d22))/(1-(d12/d22)**2)))
-        else:
-            CN_s2, Ps2 = 0, 0
-        CN_s1 = 2*((d21/NBD)**2 - (d11/NBD)**2)
-        Ps1 = CN_s1 * (xs1+(Lt1/3)*(1+(1-(d11/d21))/(1-(d11/d21)**2)))
-    else:
-        CN_s1, Ps1, CN_s2, Ps2 = 0, 0, 0, 0
+    CN_f1 = (1+(bodyRadius)/(finSpan+bodyRadius)) * ((4*numberOfFins*(finSpan/bodyDiameter)**2)/(1+np.sqrt(1+((2*Y1)/(rootChord+tipChord))**2)))
+    Pf1 = CN_f1 * (leadingEdgeToNosecone+(sweepLength*(rootChord+2*tipChord)/(3*(rootChord+tipChord)))+(1/6)*(rootChord+tipChord-(rootChord*tipChord)/(rootChord+tipChord)))
 
     if noseType == "cone":
-        Pn = CN_n * (0.6667*L)
+        Pn = CN_n * (0.6667*noseLength)
     elif noseType == "ogive":
-        Pn = CN_n * (0.466*L)
+        Pn = CN_n * (0.466*noseLength)
     elif noseType == "paraboloid":
-        Pn = CN_n * (0.5*L)
+        Pn = CN_n * (0.5*noseLength)
     elif noseType == "ellipsoid":
-        Pn = CN_n * (0.3333*L)
+        Pn = CN_n * (0.3333*noseLength)
     else:
         Pn = 0
 
-    netNormalForce = CN_n + CN_s1 + CN_s2 + CN_f1 + CN_f2
-    netMoment = Pn + Ps1 + Ps2 + Pf1 + Pf2
+    netNormalForce = CN_n + CN_f1
+    netMoment = Pn + Pf1
     return netMoment/netNormalForce
 
 #everyting else
@@ -110,7 +101,7 @@ windSpeed = 0 # m/s
 rocketLength = 0.425 # m
 CG_dry = 0.24 # m from the nose tip
 CG_wet = 0.26
-CP = centerOfPressure() # m from the nose tip
+CP = initcenterOfPressure() # m from the nose tip
 CT = (CG_wet*(dryMass+fuelMass)-CG_dry*dryMass)/(fuelMass)
 
 CN_alpha = 11.97 #pulled from OR
@@ -156,33 +147,234 @@ x_dragList = []
 y_dragList = []
 densityList = []
 
+def temperature(altitude):
+    if altitude+initialAltitude < 11000:
+        return initialTemperature - temperatureLapseRate * (altitude)
+    else:
+        return initialTemperature - temperatureLapseRate * (11000-initialAltitude)
+
+def pressure(altitude):
+    return initialPressure * ((temperature(altitude)+273.15)/(initialTemperature+273.15))**(gravity*airMolarMass/(universeGasConstant*temperatureLapseRate))
+
+def dynamicPressure(windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    return 0.5 * airDensity(altitude) * airSpeed(windSpeed, rocketVelocityX, rocketVelocityY)**2
+
+def airDensity(altitude):
+    return pressure(altitude)/(SpecificGasConstant*(temperature(altitude)+273.15))
+
+def speedOfSound(altitude):
+    return np.sqrt(AdiabaticIndex*SpecificGasConstant*(temperature(altitude)+273.15))
+
+def machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    return airSpeed(windSpeed, rocketVelocityX, rocketVelocityY)/speedOfSound(altitude)
+
+def airSpeed(windspeed, rocketVelocityX, rocketVelocityY):
+    return np.sqrt((rocketVelocityX-windspeed*np.sin(windHeading))**2 + (rocketVelocityY**2) + (windspeed*np.cos(windHeading))**2)
+
+def rocketSpeed(rocketVelocityX, rocketVelocityY):
+    return np.sqrt(rocketVelocityX**2 + rocketVelocityY**2)
+
+def angle_of_attack(theta, x_velocity, y_velocity):
+    return np.arctan2(x_velocity, y_velocity) - theta
+
+def dynamicViscosity(altitude):
+    return 1.458*10**(-6)*((temperature(altitude)+273.15)**(3/2))/(temperature(altitude)+273.15+110.4)
+
+def kinematicViscosity(altitude):
+    return dynamicViscosity(altitude)/airDensity(altitude)
+
+def reynoldsNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude, characteristicLength):
+    return airSpeed(windSpeed, rocketVelocityX, rocketVelocityY) * characteristicLength / kinematicViscosity(altitude)
+
+def zeroAngleDragCoefficient(time, windSpeed, rocketVelocityX, rocketVelocityY, altitude, L):
+    return C_D_friction(windSpeed, rocketVelocityX, rocketVelocityY, altitude, L) + nosePressureDrag(windSpeed, rocketVelocityX, rocketVelocityY, altitude) + finPressureDrag(time, windSpeed, rocketVelocityX, rocketVelocityY, altitude) + baseDragCoefficient(time, windSpeed, rocketVelocityX, rocketVelocityY, altitude) + parasiticDrag(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+
+def C_D_friction(windSpeed, rocketVelocityX, rocketVelocityY, altitude, L):
+    R = reynoldsNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude, L)
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    R_crit = 51*(surfaceRoughness/L)**-1.039
+    if R < 10**4:
+        C_f = 1.48*10**-2
+    elif R < R_crit:
+        C_f = 1/(1.5*np.log(R)-5.6)**2
+    else:
+        C_f = 0.032*(surfaceRoughness/L)**0.2
+
+    C_Mach = (1-0.1*M**2)
+    C_f_rough = 0.032*(surfaceRoughness/L)**0.2 * C_Mach
+    C_f_component = max(C_f, C_f_rough)
+    K_body = 1 + 1/(2*finenessRatio)
+    K_fin = 1 + 2*finThickness/meanAerodynamicChordLengthOfFin
+    C_D_body = C_f_component * K_body * (A_wet_body/A_ref)
+    C_D_fins = C_f_component * K_fin * (A_wet_fins/A_ref)
+    return C_D_body + C_D_fins
+
+def nosePressureDrag(windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    kappa=(1/1) #rho_t/rho in current case both are equal so for performance, it will be simplified.
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    epsilon = np.arctan(bodyDiameter/(2*noseLength))
+    gamma = 1.4
+    C_D_At_M1 = np.sin(epsilon)
+    slope = 4/(gamma+1) * (1-0.5*C_D_At_M1)
+    if M < 0.8:
+        coneDragCoefficient = 0.8*np.sin(jointAngle)**2
+    elif M < 1.2:
+        coneDragCoefficient = (3*slope+C_D_At_M1-2*np.sin(jointAngle)**2)*(M-0.8)+0.8*np.sin(jointAngle)**2
+    else:
+        coneDragCoefficient = slope*M + C_D_At_M1
+    return  (0.72*(kappa-0.5)**2 + 0.82)* coneDragCoefficient #the correction factor is only used for ogival shapes, which we are, therefor for now well assume it  
+
+def finPressureDrag(time, windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    if M < 0.9: #rounded edge
+        perpindicularLeadingEdgeDrag = (1-M**2)**(-0.417) -1
+    elif M < 1:
+        perpindicularLeadingEdgeDrag = 1 - 1.785*(M-0.9)
+    else:
+        perpindicularLeadingEdgeDrag = 1.214 - (0.502/M**2) + (0.1095/M**4)
+    leadingEdgeDrag = perpindicularLeadingEdgeDrag * np.cos(leadingEdgeAngle)**2 #angled fin, sweep angle
+    trailingEdgeDrag = (1/2) * baseDragCoefficient(time, windSpeed, rocketVelocityX, rocketVelocityY, altitude) #rounded edge
+    C_D_fin = leadingEdgeDrag + trailingEdgeDrag
+    A_FIN = numberOfFins * finThickness * finSpan
+    return (A_FIN/A_ref) * C_D_fin
+
+def baseDragCoefficient(time, windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    if time < timeCurve[-1]:
+        A_motor = (np.pi/4) * motorDiameter ** 2
+    else:
+        A_motor = 0
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    if M < 1:
+        CD_base = 0.12 + 0.13*M**2
+    else:
+        CD_base = 0.25/M
+    return CD_base * (A_ref-A_motor)/A_ref
+
+def parasiticDrag(windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    if M < 1:
+        qRatio = 1 + (M**2/4) + (M**4/40)
+        C_D_base = 0.12 + 0.13*M**2
+    else:
+        qRatio = 1.84 - (0.76/M**2) + (0.166/M**4) + (0.035/M**6)
+        C_D_base = 0.25/M
+    C_D_stag = 0.85 * qRatio
+    C_D_parasitic = max(1.3-0.3*(launchGuideLength/launchGuideOuterDiameter), 1) * C_D_stag
+    outer_Area = np.pi * (launchGuideOuterDiameter/2)**2
+    inner_Area = np.pi * (launchGuideInnerDiameter/2)**2
+    A_parasitic = outer_Area - inner_Area
+    f = 0.25/((np.log10((launchGuideRoughness/(3.7*launchGuideInnerDiameter)) + (5.74/(reynoldsNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude, launchGuideInnerDiameter)**0.9))))**2)
+    C_D_tube = f * (launchGuideLength/launchGuideInnerDiameter)
+    return (C_D_tube * inner_Area + 0.7*(C_D_parasitic + C_D_base)*A_parasitic)/A_ref
+
+def axialDragCoefficient(AOA):
+    if abs(AOA) <= 17:
+        scalefunction = (-3/24565)*abs(AOA)**3 + (9/2890)*AOA**2 + 1
+    else:
+        scalefunction = (13/1945085)*(AOA-90)**3 + (2847/3890170)*(AOA-90)**2
+    return zeroAngleDragCoefficient() * scalefunction
+
+def axialDragForce():
+    rho = airDensity()
+    V = airSpeed()
+    C_A = axialDragCoefficient
+    return (1/2)*rho*V**2 * A_ref * C_A
+
+def normalForceFinCoefficientDerivative(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    midchordSweepAngle = np.arctan(finSpan/(sweepLength+tipChord/2-rootChord/2))
+    beta = np.sqrt(abs(M**2-1))
+    C_Nalpha0 = 2*np.pi/beta
+    AR = 2*(finSpan**2)/A_fin
+    F_D = AR/((1/(2*np.pi))*C_Nalpha0*np.cos(midchordSweepAngle))
+    C_N_1fin = (C_Nalpha0 * F_D * (A_fin/A_ref) * np.cos(midchordSweepAngle))/(2+F_D*np.sqrt(1+4/(F_D**2)))    #(2*np.pi*((finSpan**2)/A_ref))/(2+((beta*finSpan**2)/(A_fin*np.cos(midchordSweepAngle))))
+    C_N_fins = (numberOfFins/2) * C_N_1fin
+    K_TB = 1 + (bodyRadius/(finSpan+bodyRadius))
+    return K_TB * C_N_fins
+
+def windSpeed(altitude):
+    return initWindSpeed * (altitude/initialAltitude)
+
+
+def normalForceCoefficientDerivative(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    C_N_finsWithInterference = normalForceFinCoefficientDerivative(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    C_N_nose = 2*np.cos(AOA)
+    return C_N_nose + C_N_finsWithInterference
+
+def pitchMomentCoefficientDerivative(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    C_m_nose = (2*np.sin(AOA))/(A_ref*bodyDiameter)*(noseLength*A_ref-noseVolume)
+    M = machNumber(windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    AR = 2*finSpan**2/A_fin
+    beta = np.sqrt(abs(M**2-1))
+
+    A = np.array([
+    [1,0.5,0.5**2,0.5**3,0.5**4,0.5**5],
+    [0,1,2*0.5,3*0.5**2,4*0.5**3,5*0.5**4],
+    [1,2,2**2,2**3,2**4,2**5],
+    [0,1,2*2,3*2**2,4*2**3,5*2**4],
+    [0,0,2,6*2,12*2**2, 20*2**3],
+    [0,0,0,6,24*2,60*2**2]
+    ])
+
+    b = np.array([
+        0.25, #p(0.5)
+        0,  #p'(0.5)
+        meanAerodynamicChordLengthOfFin*((AR*np.sqrt(abs(2**2-1)) - 0.67)/(2*AR*np.sqrt(abs(2**2-1))-1)),   #p(2) = f(2)
+        ((0.68*AR)/(np.sqrt(3)*(2*AR*np.sqrt(3)-1)**2)),  #p'(2) = f'(2)
+        0,  #p''(2)
+        0   #p'''(2)
+    ])
+
+    coefficients = np.linalg.solve(A,b)
+
+    if M <= 0.5:
+        x_f = (sweepLength/3)*((rootChord+2*tipChord)/(rootChord+tipChord))+(1/6)*((rootChord**2+tipChord**2+rootChord*tipChord)/(rootChord+tipChord))
+    elif M <=2:
+        x_f = coefficients[0] + coefficients[1]*M + coefficients[2]*M**2 + coefficients[3]*M**3 + coefficients[4]*M**4 + coefficients[5]*M**5
+    else:
+        x_f = meanAerodynamicChordLengthOfFin*((AR*beta - 0.67)/(2*AR*beta-1))
+    x_fin = leadingEdgeToNosecone + x_f
+    C_m_fins = normalForceFinCoefficientDerivative(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude) * x_fin/bodyDiameter
+    return C_m_nose+C_m_fins
+
+def normalForce(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    rho = airDensity(altitude)
+    V = airSpeed(windSpeed, rocketVelocityX, rocketVelocityY)
+    C_N_alpha = normalForceCoefficientDerivative(AOA,windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    return (1/2)*rho*V**2 * A_ref * bodyDiameter * C_N_alpha * AOA
+
+def pitchMoment(AOA,windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    rho = airDensity(altitude)
+    V = airSpeed(windSpeed,rocketVelocityX,rocketVelocityY)
+    C_m_alpha = pitchMomentCoefficientDerivative(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude)
+    return (1/2)*rho*V**2 * A_ref * C_m_alpha * AOA
+
+def centerOfPressure(AOA,windSpeed, rocketVelocityX, rocketVelocityY, altitude):
+    if AOA != 0:
+        return (pitchMomentCoefficientDerivative(AOA,windSpeed, rocketVelocityX, rocketVelocityY, altitude)/normalForceCoefficientDerivative(AOA,windSpeed, rocketVelocityX, rocketVelocityY, altitude))*bodyDiameter
+    else:
+        return CP
+
+def windSpeedatAltitude(altitude):
+    return initWindSpeed + 0*altitude
+
+def moment(time, theta, rocketVelocityX, rocketVelocityY, altitude):
+    AOA = angle_of_attack(theta, rocketVelocityX, rocketVelocityY)
+    windSpeed = windSpeedatAltitude(altitude)
+    CG = centerOfGravity(time)
+    return normalForce(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude)*(centerOfPressure(AOA, windSpeed, rocketVelocityX, rocketVelocityY, altitude)-CG)
+
+# #Functions
 
 
 
-#Functions
-def centerOfPressure():
-    CN_n = 2
-    CN_s1 = 2*((d21/NBD)**2 - (d11/NBD)^2)
-    CN_s2 = 2*((d22/NBD)**2 - (d12/NBD)^2)
-    CN_f1 = (1+(R1)/(s1+R1)) * ((4*f1*(s1/NBD)**2)/(1+np.sqrt(1+((2*Y1)/(a1+b1))**2)))
-    CN_f2 = (1+(R2)/(s2+R2)) * ((4*f2*(s2/NBD)**2)/(1+np.sqrt(1+((2*Y2)/(a2+b2))**2)))
-    Pn = CN_n * (0.466*L)
-    Ps1 = CN_s1 * (xs1+(Lt1/3)*(1+(1-(d11/d21))/(1-(d11/d21)**2)))
-    Ps2 = CN_s2 * (xs2+(Lt2/3)*(1+(1-(d12/d22))/(1-(d12/d22)**2)))
-    Pf1 = CN_f1 * (Xf1+(m1*(a1+2*b1)/(3*(a1+b1)))+(1/6)*(a1+b1-(a1*b1)/(a1+b1)))
-    Pf2 = CN_f2 * (Xf2+(m2*(a2+2*b2)/(3*(a2+b2)))+(1/6)*(a2+b2-(a2*b2)/(a2+b2)))
 
-    netNormalForce = CN_n + CN_s1 + CN_s2 + CN_f1 + CN_f2
-    netMoment = Pn + Ps1 + Ps2 + Pf1 + Pf2
-    return netMoment/netNormalForce
+
 
 def moment_of_inertia(current_mass, time):
     I_center = (1/12) * current_mass * rocketLength ** 2 #assuming uniform density for now
     d = centerOfGravity(time) - rocketLength/2 #distance between center and CG
     return I_center + current_mass * d**2 #parallel axis theorem
-    
-def angle_of_attack(theta, x_velocity, y_velocity):
-    return np.arctan2(x_velocity, y_velocity) - theta
 
 def normal_force(theta, y_pos, x_velocity, y_velocity):
     dynamicPressure = 0.5*air_density(y_pos)*netSpeed(x_velocity, y_velocity)**2 #Assuming incompressible air for now
@@ -193,7 +385,7 @@ def yaw_torque(theta, y_pos, x_velocity, y_velocity, time):
     return normal_force(theta, y_pos, x_velocity, y_velocity) * (CP-centerOfGravity(time))
 
 def alpha(time, theta, y_pos, x_velocity, y_velocity):
-    return yaw_torque(theta, y_pos, x_velocity, y_velocity, time) / moment_of_inertia(mass(time),time)
+    return moment(time, theta, x_velocity, y_velocity, y_pos) / moment_of_inertia(mass(time),time)
 
 def air_density(y_pos):
     return 1.225 * (1-((0.0065/288.15)*y_pos))**((gravity/(287.05*0.0065))-1)
