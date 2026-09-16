@@ -3,6 +3,8 @@ import io #agar
 import streamlit
 import pandas
 import numpy as np
+import matplotlib.pyplot as pyplot
+from threading import RLock
 
 import simnew
 
@@ -20,13 +22,26 @@ def run_button_pressed():
     rocket = streamlit.session_state.sim
     rocket.run_simulation()
     summary = rocket.get_summary()
-    streamlit.write(summary)
+    rod_velocity, apogee, max_velocity, max_acceleration, time_to_apogee, flight_time, ground_hit_velocity, range = summary["rod_velocity"], summary["apogee"], summary["max_velocity"], summary["max_acceleration"], summary["time_to_apogee"], summary["flight_time"], summary["ground_hit_velocity"], summary["range"]
+    summary_container.markdown(f"<u>**Rod velocity**</u> is {round(rod_velocity, 3)}m/s<br>\
+                                <u>**Apogee**</u> is at {round(apogee, 3)} meters<br>\
+                                <u>**Time to apogee**</u> is {round(time_to_apogee, 3)} seconds<br>\
+                                <u>**Max velocity**</u> is {round(max_velocity, 3)}m/s<br>\
+                                <u>**Max acceleration**</u> is {round(max_acceleration, 3)}m/s<sup>2</sup><br>\
+                                <u>**Flight time**</u> is {round(flight_time, 3)} seconds<br>\
+                                <u>**Final velocity**</u> is {round(ground_hit_velocity, 3)} m/s<br>\
+                                **Rocket traveled {round(range)} meters on the x-axis**\
+                               ", True)
+
     # Keep results in memory (session_state), not a shared file on disk.
     streamlit.session_state.results = rocket.get_results()
 
 
 def update_variable(variable_name, state_key):
     setattr(streamlit.session_state.sim, variable_name, streamlit.session_state[state_key])
+
+summary_container = streamlit.container(border=True)
+
 
 
 with streamlit.sidebar:
@@ -137,10 +152,17 @@ with streamlit.sidebar:
         args=("CG_wet", "cg_wet_input")
     )
 
+col1, col2 = streamlit.columns(2)
+
 if "results" in streamlit.session_state:
     df = pandas.DataFrame(streamlit.session_state.results)
-    streamlit.line_chart(df, x="time", y="y_pos")
-    streamlit.dataframe(df, use_container_width=True)
+
+
+    col1.line_chart(df, x="time", y="y_pos")
+    col1.dataframe(df, use_container_width=True)
+
+    col2.scatter_chart(df, x="x_pos", y="y_pos", color="time")
+    col2.dataframe(df, use_container_width=True)
     streamlit.download_button(
         "Export as CSV",
         data=streamlit.session_state.sim.results_csv_bytes(),
