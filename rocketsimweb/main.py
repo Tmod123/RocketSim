@@ -4,7 +4,7 @@ import streamlit
 import pandas
 import numpy as np
 
-import sim
+import simnew
 
 streamlit.set_page_config(page_title="rocket flight simulator", layout="wide")
 streamlit.title("rocket flight simulator")
@@ -13,12 +13,14 @@ streamlit.title("rocket flight simulator")
 # single user's session (unlike a plain module-level variable, which the
 # whole server process - i.e. every visitor - would share).
 if "sim" not in streamlit.session_state:
-    streamlit.session_state.sim = sim.RocketSim()
+    streamlit.session_state.sim = simnew.RocketSimNew()
 
 
 def run_button_pressed():
     rocket = streamlit.session_state.sim
     rocket.run_simulation()
+    summary = rocket.get_summary()
+    streamlit.write(summary)
     # Keep results in memory (session_state), not a shared file on disk.
     streamlit.session_state.results = rocket.get_results()
 
