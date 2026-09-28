@@ -186,7 +186,7 @@ launchGuideRoughness = 60e-9    # meters — same as above
 dryMass = 4.991  # kg — mass properties computed during simulation
 fuelMass = 1.552   # kg — motor propellant mass
 rodLength   = 1.0                  # m — launch condition, not part of <rocket>
-launchAngle = np.radians(0)
+launchAngle = np.radians(2)
 launchDirection = np.radians(45) #heading
 launch_vector = np.array([np.sin(launchAngle)*np.cos(launchDirection), np.sin(launchAngle) * np.sin(launchDirection), np.cos(launchAngle)])
 CG_dry = 1.0463  # m from nose tip — computed mass property
@@ -321,7 +321,7 @@ momentHistory = np.empty((3,0))
 
 
 #Constants
-gravity = 9.81 # m/s^2
+gravity = 9.806 # m/s^2
 timeStep = 0.05 # seconds
 initialTemperature = 20 #degrees Celsius
 initialAltitude = 220 #meters above sea level
@@ -333,9 +333,9 @@ temperatureLapseRate = 0.0065 #K/m
 AdiabaticIndex = 1.4 #unitless & constant for our purpose, value for air
 x_n1 = 0
 x_n2 = 0
-avgWindSpeed = 0 #m/s
-turbulence = 0
-windHeading = 0 #radians, 0 is wind to the north, pi/2 is wind to the east, pi is wind to the south, 3pi/2 is wind to the west
+avgWindSpeed = 1 #m/s
+turbulence = 0.2
+windHeading = np.radians(45) #radians, 0 is wind to the north, pi/2 is wind to the east, pi is wind to the south, 3pi/2 is wind to the west
 
 #calculated values
 Y1 = np.sqrt(finSpan**2+(sweepLength+tipChord/2-rootChord/2)**2) #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
@@ -397,12 +397,12 @@ windSpeeds = []
 
 for i in range(0,10000):
     w_n = random.gauss(0,1)
-    x_n = w_n + (5/6)*(x_n1)+(5/24)*(x_n2)
+    x_n = w_n + (5/6)*(x_n1)-(5/24)*(x_n2)
     x_n2 = x_n1
     x_n1 = x_n
     stdev = avgWindSpeed*turbulence
     windSpeeds.append(avgWindSpeed + stdev*x_n)
-    timeWindSpeeds.append((i-1)*0.1)
+    timeWindSpeeds.append(i*0.1)
 
 def temperature(position):
     altitude = position[2]
@@ -670,7 +670,8 @@ def centerOfGravity(time):
 
 def derivatives(time, position, velocity, orientation, angular_velocity):
     wind = float(np.interp(time, timeWindSpeeds, windSpeeds, right=0.0))
-    airFlow_velocity_world = velocity - wind
+    windVector = wind*np.array([np.sin(windHeading), np.cos(windHeading), 0])
+    airFlow_velocity_world = velocity - windVector
     airFlow_velocity_body = inverse_rotate_vector(orientation, airFlow_velocity_world)
     AOA = angle_of_attack(airFlow_velocity_body)
     CP = centerOfPressure(airFlow_velocity_world, position, AOA)
@@ -753,6 +754,7 @@ def run_simulation():
 
         euler_orientation = quaternion_to_euler(orientation)
         wind = float(np.interp(time, timeWindSpeeds, windSpeeds, right=0.0))
+        windVector = wind* np.array([np.sin(windHeading),np.cos(windHeading), 0])
         derivative = derivatives(time, position, velocity, orientation, angular_velocity)
         timeList.append(time)
         massList.append(mass(time))
@@ -762,7 +764,7 @@ def run_simulation():
         orientationHistory = np.hstack((orientationHistory, np.array(euler_orientation).reshape(-1,1)))
         angularVelocityHistory = np.hstack((angularVelocityHistory, np.array(angular_velocity).reshape(-1, 1)))
         momentHistory = np.hstack((momentHistory, np.array(derivative[3] * np.array(moment_of_inertia(time))).reshape(-1, 1)))
-        machList.append(machNumber(velocity - wind, position))
+        machList.append(machNumber(velocity - windVector, position))
         AOAList.append(angle_of_attack(velocity))
         if velocity[2] >= 0:
             #CDList.append(parasiticDrag(velocity,position))
@@ -770,7 +772,7 @@ def run_simulation():
             #CDList.append(finPressureDrag(time, velocity, position))
             #CDList.append(nosePressureDrag(velocity, position))
             #CDList.append(C_D_friction(velocity, position))
-            CDList.append(axialDragCoefficient(time, velocity - wind, position, angle_of_attack(velocity)))
+            CDList.append(axialDragCoefficient(time, velocity - windVector, position, angle_of_attack(velocity)))
         else:
             CDList.append(parachuteDragCoefficient)
 
@@ -778,7 +780,9 @@ def run_simulation():
 
 
         
-        time += timeStep        
+        time += timeStep   
+
+
 
 def plot_results():
     fig, ax1 = plt.subplots(figsize=(10, 8))
