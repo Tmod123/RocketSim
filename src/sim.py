@@ -5,6 +5,7 @@ import csv
 import sys
 import random
 import json
+import os
 
 def import_Motor_Data(filename):
     times = [0.000]
@@ -176,10 +177,12 @@ if parachuteAreas_all:
 else:
     parachuteArea = None
 parachuteDragCoefficient = 0.80  # not stored numerically ("auto" in file)
- 
+parachuteArea = 0.07306
 finSets = 1
 transitions = 1 if "transition" in comps else 0
-
+MainDeploymentAltitude = 305
+MainArea = 1.169
+MainDragCoefficient = 1.550
 epsilonAngle = 0 #basically transition angle for nosecone, 0 since smooth, but a cone could be like 15
 surfaceRoughness = 20e-6    # meters — needs a materials-roughness table/guess
 launchGuideRoughness = 60e-9    # meters — same as above
@@ -541,8 +544,10 @@ def axialDragForce(time, airVelocity, position, AOA):
     V = speed(airVelocity)
     if airVelocity[2] >= 0:
         A, C_A = A_ref, axialDragCoefficient(time, airVelocity, position, AOA)
-    else:
+    elif position[2] > MainDeploymentAltitude:
         A, C_A = parachuteArea, parachuteDragCoefficient
+    else:
+        A, C_A = MainArea, MainDragCoefficient
     return (1/2)*rho*V**2 * A * C_A
 
 def normalForceFinCoefficientDerivative(airVelocity, position):
@@ -780,7 +785,9 @@ def run_simulation():
 
 
         
-        time += timeStep   
+        time += timeStep
+        if time*100 % 10 == 5:
+            Output(time, position)
 
 
 
@@ -802,6 +809,12 @@ def plot_results():
     plt.title('Vertical Motion vs Time')
     plt.tight_layout()
     plt.show()
+
+def Output(time, position):
+    os.system("cls")
+    print("Calclating...")
+    print(f"Time: {int(time*100)/100}")
+    print(f"Altitude: {position[2]}")
 
 if __name__ == "__main__":
     print("Calculuting...")
