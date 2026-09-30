@@ -1,0 +1,669 @@
+{
+  "rocket": {
+    "name": "Honey",
+    "id": "66c9647a-0b89-44f0-ba5a-7dbf87814a00",
+    "axialoffset": {
+      "@attributes": {
+        "method": "absolute"
+      },
+      "#text": 0.0
+    },
+    "position": {
+      "@attributes": {
+        "type": "absolute"
+      },
+      "#text": 0.0
+    },
+    "comment": "final disign done 9/16/2026",
+    "designer": "Logan Simmank",
+    "designtype": "original",
+    "motorconfiguration": {
+      "@attributes": {
+        "configid": "e26966ed-4fdd-4567-8197-b8ea7ac3c6e0",
+        "default": true
+      },
+      "stage": {
+        "@attributes": {
+          "number": 0,
+          "active": true
+        }
+      }
+    },
+    "referencetype": "maximum",
+    "subcomponents": {
+      "stage": {
+        "name": "Sustainer",
+        "id": "70f4c11b-1925-4da1-b313-dd6249562600",
+        "subcomponents": {
+          "nosecone": {
+            "name": "Nose Cone",
+            "id": "30e7e050-32db-4811-831a-668e88981e60",
+            "finish": "smooth",
+            "material": {
+              "@attributes": {
+                "type": "bulk",
+                "density": 1050.0,
+                "group": "Other"
+              },
+              "#text": "Polystyrene, cast, bulk"
+            },
+            "length": 0.32384999999999997,
+            "thickness": 0.003175,
+            "shape": "ogive",
+            "shapeparameter": 1.0,
+            "aftradius": 0.0508,
+            "aftshoulderradius": 0.04927599999999999,
+            "aftshoulderlength": 0.0508,
+            "aftshoulderthickness": 0.0038099999999999996,
+            "aftshouldercapped": false,
+            "isflipped": false
+          },
+          "bodytube": [
+            {
+              "name": "Body Tube",
+              "id": "e79d8550-fdb2-40f2-910f-e69019c731ca",
+              "finish": "smooth",
+              "material": {
+                "@attributes": {
+                  "type": "bulk",
+                  "density": 1300.0,
+                  "group": "Composites"
+                },
+                "#text": "Blue tube"
+              },
+              "length": 0.381,
+              "thickness": 0.002,
+              "radius": "auto 0.0508",
+              "subcomponents": {
+                "masscomponent": {
+                  "name": "ebay",
+                  "id": "922824ae-cb32-4ac2-a0e5-bcba7ca28bac",
+                  "color": {
+                    "@attributes": {
+                      "red": 0,
+                      "green": 204,
+                      "blue": 51,
+                      "alpha": 255
+                    }
+                  },
+                  "linestyle": "dashed",
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "top"
+                    },
+                    "#text": 0.15
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "top"
+                    },
+                    "#text": 0.15
+                  },
+                  "packedlength": 0.025,
+                  "packedradius": 0.0125,
+                  "radialposition": 0.0,
+                  "radialdirection": 0.0,
+                  "mass": 0.1,
+                  "masscomponenttype": "masscomponent"
+                },
+                "bulkhead": {
+                  "name": "Bulkhead",
+                  "id": "7b2b189b-6ed7-495c-a9c5-cb0fbfbfa6b8",
+                  "instancecount": 1,
+                  "instanceseparation": 0.0,
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "bottom"
+                    },
+                    "#text": -0.17018
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "bottom"
+                    },
+                    "#text": -0.17018
+                  },
+                  "material": {
+                    "@attributes": {
+                      "type": "bulk",
+                      "density": 500.0,
+                      "group": "Woods"
+                    },
+                    "#text": "Basswood"
+                  },
+                  "length": 0.0127,
+                  "radialposition": 0.0,
+                  "radialdirection": 0.0,
+                  "outerradius": "auto"
+                },
+                "parachute": [
+                  {
+                    "name": "drouge",
+                    "id": "ab1a178a-9f90-4ffa-b938-249fc733da65",
+                    "preset": {
+                      "@attributes": {
+                        "type": "PARACHUTE",
+                        "manufacturer": "BalsaMachining",
+                        "partno": "CHUTE12-N",
+                        "digest": "3fc7044effc0e5929da0acbc755b4011"
+                      }
+                    },
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "top"
+                      },
+                      "#text": 0.22859999999999994
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "top"
+                      },
+                      "#text": 0.22859999999999994
+                    },
+                    "packedlength": 0.025,
+                    "packedradius": 0.0125,
+                    "radialposition": 0.0,
+                    "radialdirection": 0.0,
+                    "cd": "auto",
+                    "material": {
+                      "@attributes": {
+                        "type": "surface",
+                        "density": 0.0527,
+                        "group": "Other"
+                      },
+                      "#text": "Nylon fabric, ripstop, 1.7 oz actual"
+                    },
+                    "deployevent": "apogee",
+                    "deployaltitude": 200.0,
+                    "deploydelay": 0.0,
+                    "diameter": 0.30479999999999996,
+                    "linecount": 6,
+                    "linelength": 0.30479999999999996,
+                    "linematerial": {
+                      "@attributes": {
+                        "type": "line",
+                        "density": 0.0016,
+                        "group": "Other"
+                      },
+                      "#text": "Nylon Paracord, 110 lb, 1/16 in. dia."
+                    }
+                  },
+                  {
+                    "name": "main",
+                    "id": "77b23797-fc16-478b-81f7-890dd4610338",
+                    "preset": {
+                      "@attributes": {
+                        "type": "PARACHUTE",
+                        "manufacturer": "Fruity Chutes",
+                        "partno": "CFC-048-N",
+                        "digest": "2a5b362b2d09a347dd9835b4a883806a"
+                      }
+                    },
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "top"
+                      },
+                      "#text": 0.3302
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "top"
+                      },
+                      "#text": 0.3302
+                    },
+                    "overridemass": 0.20695152,
+                    "overridesubcomponentsmass": false,
+                    "packedlength": 0.08140409463181941,
+                    "packedradius": "auto 0.048799999999999996",
+                    "radialposition": 0.0,
+                    "radialdirection": 0.0,
+                    "cd": 1.55,
+                    "material": {
+                      "@attributes": {
+                        "type": "surface",
+                        "density": 0.035653924,
+                        "group": "Other"
+                      },
+                      "#text": "Ripstop nylon, lightweight, 3 mil"
+                    },
+                    "deployevent": "altitude",
+                    "deployaltitude": 304.8,
+                    "deploydelay": 0.0,
+                    "diameter": 1.2191999999999998,
+                    "linecount": 12,
+                    "linelength": 1.40208,
+                    "linematerial": {
+                      "@attributes": {
+                        "type": "line",
+                        "density": 0.002952756,
+                        "group": "Other"
+                      },
+                      "#text": "Nylon #200 IIa Paraline [flat 4.0 mm, 5/32 in]"
+                    }
+                  }
+                ],
+                "shockcord": {
+                  "name": "Shock Cord",
+                  "id": "492a666f-1744-4479-82d3-8875378c16ab",
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "top"
+                    },
+                    "#text": 0.2793999999999999
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "top"
+                    },
+                    "#text": 0.2793999999999999
+                  },
+                  "packedlength": 0.025,
+                  "packedradius": 0.0125,
+                  "radialposition": 0.0,
+                  "radialdirection": 0.0,
+                  "cordlength": 4.3,
+                  "material": {
+                    "@attributes": {
+                      "type": "line",
+                      "density": 0.02723097,
+                      "group": "ThreadsLines"
+                    },
+                    "#text": "Nylon flat webbing lg. (14 mm, 9/16 in)"
+                  }
+                }
+              }
+            },
+            {
+              "name": "Body Tube",
+              "id": "39055b40-85a4-406c-b4d4-0399eded1933",
+              "finish": "smooth",
+              "material": {
+                "@attributes": {
+                  "type": "bulk",
+                  "density": 1300.0,
+                  "group": "Composites"
+                },
+                "#text": "Blue tube"
+              },
+              "length": 1.1429999999999993,
+              "thickness": 0.0015748000000000012,
+              "radius": 0.0511048,
+              "subcomponents": {
+                "innertube": {
+                  "name": "Inner Tube",
+                  "id": "004b2167-7a20-400d-9227-70269493cfab",
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "bottom"
+                    },
+                    "#text": 0.0
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "bottom"
+                    },
+                    "#text": 0.0
+                  },
+                  "material": {
+                    "@attributes": {
+                      "type": "bulk",
+                      "density": 950.0,
+                      "group": "Composites"
+                    },
+                    "#text": "Kraft phenolic"
+                  },
+                  "length": 1.03505,
+                  "radialposition": 0.0,
+                  "radialdirection": 0.0,
+                  "outerradius": 0.0396748,
+                  "thickness": 0.0015748000000000081,
+                  "clusterconfiguration": "single",
+                  "clusterscale": 1.0,
+                  "clusterrotation": 0.0,
+                  "motormount": {
+                    "ignitionevent": "automatic",
+                    "ignitiondelay": 0.0,
+                    "overhang": 0.0,
+                    "motor": {
+                      "@attributes": {
+                        "configid": "e26966ed-4fdd-4567-8197-b8ea7ac3c6e0"
+                      },
+                      "type": "hybrid",
+                      "manufacturer": "HyperTEK",
+                      "digest": "0e1789731d65dab7fbc2922bdcee86e4",
+                      "designation": "1685CCRGL-L550",
+                      "diameter": 0.075,
+                      "length": 1.031,
+                      "delay": 0.0
+                    },
+                    "ignitionconfiguration": {
+                      "@attributes": {
+                        "configid": "e26966ed-4fdd-4567-8197-b8ea7ac3c6e0"
+                      },
+                      "ignitionevent": "automatic",
+                      "ignitiondelay": 0.0
+                    }
+                  }
+                },
+                "centeringring": [
+                  {
+                    "name": "Centering Ring",
+                    "id": "369dba4a-45de-4120-8693-37cac35ea01a",
+                    "instancecount": 1,
+                    "instanceseparation": 0.0,
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "bottom"
+                      },
+                      "#text": -0.334
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "bottom"
+                      },
+                      "#text": -0.334
+                    },
+                    "material": {
+                      "@attributes": {
+                        "type": "bulk",
+                        "density": 500.0,
+                        "group": "Woods"
+                      },
+                      "#text": "Basswood"
+                    },
+                    "length": 0.019049999999999997,
+                    "radialposition": 0.0,
+                    "radialdirection": 0.0,
+                    "outerradius": "auto",
+                    "innerradius": "auto"
+                  },
+                  {
+                    "name": "Centering Ring",
+                    "id": "c7fef001-958c-4a18-b669-e573a4fc3656",
+                    "instancecount": 1,
+                    "instanceseparation": 0.0,
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "bottom"
+                      },
+                      "#text": -0.883
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "bottom"
+                      },
+                      "#text": -0.883
+                    },
+                    "material": {
+                      "@attributes": {
+                        "type": "bulk",
+                        "density": 500.0,
+                        "group": "Woods"
+                      },
+                      "#text": "Basswood"
+                    },
+                    "length": 0.019049999999999997,
+                    "radialposition": 0.0,
+                    "radialdirection": 0.0,
+                    "outerradius": "auto",
+                    "innerradius": "auto"
+                  },
+                  {
+                    "name": "Centering Ring",
+                    "id": "4385694c-b082-445b-a5e8-cd98c663faaf",
+                    "instancecount": 1,
+                    "instanceseparation": 0.0,
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "bottom"
+                      },
+                      "#text": -0.025399999999999947
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "bottom"
+                      },
+                      "#text": -0.025399999999999947
+                    },
+                    "material": {
+                      "@attributes": {
+                        "type": "bulk",
+                        "density": 500.0,
+                        "group": "Woods"
+                      },
+                      "#text": "Basswood"
+                    },
+                    "length": 0.0127,
+                    "radialposition": 0.0,
+                    "radialdirection": 0.0,
+                    "outerradius": "auto",
+                    "innerradius": "auto"
+                  }
+                ],
+                "bulkhead": {
+                  "name": "Bulkhead",
+                  "id": "9e900578-3c2d-4364-86d2-624bf3e36f12",
+                  "instancecount": 1,
+                  "instanceseparation": 0.0,
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "bottom"
+                    },
+                    "#text": -1.03505
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "bottom"
+                    },
+                    "#text": -1.03505
+                  },
+                  "material": {
+                    "@attributes": {
+                      "type": "bulk",
+                      "density": 500.0,
+                      "group": "Woods"
+                    },
+                    "#text": "Basswood"
+                  },
+                  "length": 0.0127,
+                  "radialposition": 0.0,
+                  "radialdirection": 0.0,
+                  "outerradius": "auto"
+                },
+                "tubecoupler": {
+                  "name": "Tube Coupler",
+                  "id": "4e4be86d-75d6-4685-88f4-3c514bfd2a27",
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "bottom"
+                    },
+                    "#text": -1.0665999999999995
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "bottom"
+                    },
+                    "#text": -1.0665999999999995
+                  },
+                  "material": {
+                    "@attributes": {
+                      "type": "bulk",
+                      "density": 950.0,
+                      "group": "Composites"
+                    },
+                    "#text": "Kraft phenolic"
+                  },
+                  "length": 0.2032,
+                  "radialposition": 0.0,
+                  "radialdirection": 0.0,
+                  "outerradius": "auto",
+                  "thickness": 0.002
+                },
+                "freeformfinset": {
+                  "name": "Freeform Fin Set",
+                  "id": "ed82427f-ae91-433a-84e3-405adbc98fd3",
+                  "instancecount": 4,
+                  "fincount": 4,
+                  "radiusoffset": {
+                    "@attributes": {
+                      "method": "surface"
+                    },
+                    "#text": 0.0
+                  },
+                  "angleoffset": {
+                    "@attributes": {
+                      "method": "relative"
+                    },
+                    "#text": 0.0
+                  },
+                  "rotation": 0.0,
+                  "axialoffset": {
+                    "@attributes": {
+                      "method": "bottom"
+                    },
+                    "#text": 0.0
+                  },
+                  "position": {
+                    "@attributes": {
+                      "type": "bottom"
+                    },
+                    "#text": 0.0
+                  },
+                  "finish": "smooth",
+                  "material": {
+                    "@attributes": {
+                      "type": "bulk",
+                      "density": 500.0,
+                      "group": "Woods"
+                    },
+                    "#text": "Basswood"
+                  },
+                  "thickness": 0.00635,
+                  "crosssection": "rounded",
+                  "cant": 0.0,
+                  "filletradius": 0.0,
+                  "filletmaterial": {
+                    "@attributes": {
+                      "type": "bulk",
+                      "density": 1800.0,
+                      "group": "Custom"
+                    },
+                    "#text": "JB weld"
+                  },
+                  "finpoints": {
+                    "point": [
+                      {
+                        "@attributes": {
+                          "x": 0.0,
+                          "y": 0.0
+                        }
+                      },
+                      {
+                        "@attributes": {
+                          "x": 0.1279069252335045,
+                          "y": 0.01764233451496614
+                        }
+                      },
+                      {
+                        "@attributes": {
+                          "x": 0.2770400118116049,
+                          "y": 0.0740038387715931
+                        }
+                      },
+                      {
+                        "@attributes": {
+                          "x": 0.328273438653477,
+                          "y": 0.0
+                        }
+                      }
+                    ]
+                  }
+                },
+                "railbutton": [
+                  {
+                    "name": "Rail Button",
+                    "id": "7ba8d613-e663-4132-b8e9-ba6d306f5d1e",
+                    "instancecount": 1,
+                    "instanceseparation": 0.0582,
+                    "angleoffset": {
+                      "@attributes": {
+                        "method": "relative"
+                      },
+                      "#text": 130.0
+                    },
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "middle"
+                      },
+                      "#text": -0.3175
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "middle"
+                      },
+                      "#text": -0.3175
+                    },
+                    "finish": "normal",
+                    "material": {
+                      "@attributes": {
+                        "type": "bulk",
+                        "density": 1420.0,
+                        "group": "Plastics"
+                      },
+                      "#text": "Delrin"
+                    },
+                    "outerdiameter": 0.0097,
+                    "innerdiameter": 0.008,
+                    "height": 0.0097,
+                    "baseheight": 0.002,
+                    "flangeheight": 0.002,
+                    "screwheight": 0.0
+                  },
+                  {
+                    "name": "Rail Button",
+                    "id": "fcb577a6-57d5-4221-93e3-e7d688089fde",
+                    "instancecount": 1,
+                    "instanceseparation": 0.0582,
+                    "angleoffset": {
+                      "@attributes": {
+                        "method": "relative"
+                      },
+                      "#text": 130.0
+                    },
+                    "axialoffset": {
+                      "@attributes": {
+                        "method": "middle"
+                      },
+                      "#text": 0.2286
+                    },
+                    "position": {
+                      "@attributes": {
+                        "type": "middle"
+                      },
+                      "#text": 0.2286
+                    },
+                    "finish": "normal",
+                    "material": {
+                      "@attributes": {
+                        "type": "bulk",
+                        "density": 1420.0,
+                        "group": "Plastics"
+                      },
+                      "#text": "Delrin"
+                    },
+                    "outerdiameter": 0.0097,
+                    "innerdiameter": 0.008,
+                    "height": 0.0097,
+                    "baseheight": 0.002,
+                    "flangeheight": 0.002,
+                    "screwheight": 0.0
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
