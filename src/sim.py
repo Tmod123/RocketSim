@@ -1,4 +1,4 @@
-#sim.py - V2.3
+#sim.py - V3.5
 import matplotlib.pyplot as plt 
 import numpy as np
 import csv
@@ -185,12 +185,12 @@ MainArea = 1.169
 MainDragCoefficient = 1.550
 epsilonAngle = 0 #basically transition angle for nosecone, 0 since smooth, but a cone could be like 15
 surfaceRoughness = 20e-6    # meters — needs a materials-roughness table/guess
-launchGuideRoughness = 60e-9    # meters — same as above
+launchGuideRoughness = 60e-6    # meters — same as above
 dryMass = 4.991  # kg — mass properties computed during simulation
 fuelMass = 1.552   # kg — motor propellant mass
 rodLength   = 1.0                  # m — launch condition, not part of <rocket>
 launchAngle = np.radians(2)
-launchDirection = np.radians(45) #heading
+launchDirection = np.radians(-135) #heading
 launch_vector = np.array([np.sin(launchAngle)*np.cos(launchDirection), np.sin(launchAngle) * np.sin(launchDirection), np.cos(launchAngle)])
 CG_dry = 1.0463  # m from nose tip — computed mass property
 CG_wet = 1.0774  # m from nose tip — same
@@ -309,11 +309,6 @@ position = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
 velocity = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
 orientation = quaternion_from_two_vectors(np.array([0.0,0.0,1.0]),launch_vector) #w, x, y, z. where x is pitch, y is yaw, z is roll, is body orientated
 angular_velocity = np.array([0.0, 0.0, 0.0]) #x, y, z, is body orientated
-state = [position, velocity, orientation, angular_velocity] #2d array
-
-force = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-total_moment_body = np.array([0.0, 0.0, 0.0])
-momentOfInertia = np.diag([0.0, 0.0, 0.0]) #x, y, z, is body orientated
 
 positionHistory = np.empty((3,0))
 velocityHistory = np.empty((3,0))
@@ -326,8 +321,8 @@ momentHistory = np.empty((3,0))
 #Constants
 gravity = 9.806 # m/s^2
 timeStep = 0.05 # seconds
-initialTemperature = 20 #degrees Celsius
-initialAltitude = 220 #meters above sea level
+initialTemperature = 20.53583333 #degrees Celsius
+initialAltitude = 492 #meters above sea level
 initialPressure = 101550 #Pa
 airMolarMass = 0.0289644 #kg/mol
 universeGasConstant = 8.31447 #J/(mol*K)
@@ -336,8 +331,8 @@ temperatureLapseRate = 0.0065 #K/m
 AdiabaticIndex = 1.4 #unitless & constant for our purpose, value for air
 x_n1 = 0
 x_n2 = 0
-avgWindSpeed = 1 #m/s
-turbulence = 0.2
+avgWindSpeed = 5 #m/s
+turbulence = 0.15 #Turbulence Intensity.
 windHeading = np.radians(45) #radians, 0 is wind to the north, pi/2 is wind to the east, pi is wind to the south, 3pi/2 is wind to the west
 
 #calculated values
@@ -608,14 +603,13 @@ def normalForce(airVelocity, position, AOA):
     rho = airDensity(position)
     V = speed(airVelocity)
     C_N_alpha = normalForceCoefficientDerivative(airVelocity, position, AOA)
-    return (1/2)*rho*V**2 * A_ref * bodyDiameter * C_N_alpha * AOA
+    return (1/2)*rho*V**2 * A_ref * C_N_alpha * AOA
 
 def centerOfPressure(airVelocity, position, AOA):
     if AOA != 0:
         return (pitchMomentCoefficientDerivative(airVelocity, position, AOA)/normalForceCoefficientDerivative(airVelocity, position, AOA))*bodyDiameter
     else:
         return CP
-
 
 def moment_of_inertia(time):
     # Assuming a simple cylindrical rocket for now
@@ -691,27 +685,31 @@ def derivatives(time, position, velocity, orientation, angular_velocity):
     else:
         unit_perpindicular_airFlow = np.zeros(3)
 
-    normal_Force_body = inverse_rotate_vector(orientation, normalForce(airFlow_velocity_world, position, AOA)*unit_perpindicular_airFlow)
+    normal_Force_body = inverse_rotate_vector(orientation, -normalForce(airFlow_velocity_world, position, AOA)*unit_perpindicular_airFlow)
 
     axialDrag_Force = axialDragForce(time, airFlow_velocity_world, position, AOA)
-
-    aero_force_body = normal_Force_body + (np.array([0,0,axialDrag_Force]) * -np.sign(airFlow_velocity_body[2]))
-    aero_force_world = rotate_vector(orientation, aero_force_body)
-    
+    if airFlow_velocity_world[2] < 0 and airFlow_speed > 0:
+        aero_force_world = -axialDrag_Force * airFlow_velocity_world / airFlow_speed
+        aero_force_body = inverse_rotate_vector(orientation, aero_force_world)
+        moment_scale = 0.0
+    else:
+        aero_force_body = normal_Force_body + (np.array([0,0,axialDrag_Force]) * -np.sign(airFlow_velocity_body[2]))
+        aero_force_world = rotate_vector(orientation, aero_force_body)
+        moment_scale = 1.0
     thrust_body = np.array([0.0, 0.0, thrust_magnitude(time)])
     thrust_world = rotate_vector(orientation, thrust_body)
 
-    gravity_world = np.array([0.0, 0.0, mass(time) * gravity])
+    gravity_world = np.array([0.0, 0.0, -mass(time) * gravity])
     if on_rod(position):
         netForce_world = thrust_world
     else:
-        netForce_world = thrust_world - gravity_world + aero_force_world
+        netForce_world = thrust_world + gravity_world + aero_force_world
 
     # Acceleration
     acceleration = netForce_world / mass(time)
 
     # Moments
-    total_moment_body = np.cross([0,0,CP-CG], aero_force_body)
+    total_moment_body = moment_scale * np.cross([0,0,CG-CP], aero_force_body)
 
     # Angular acceleration
     I_matrix = np.diag(moment_of_inertia(time))
@@ -792,23 +790,54 @@ def run_simulation():
 
 
 def plot_results():
-    fig, ax1 = plt.subplots(figsize=(10, 8))
-    ax1.plot(timeList, positionHistory[2], color='blue', label='Altitude (m)')
-    ax1.set_ylabel('Altitude (m)', color='blue')
-    ax1.tick_params(axis='y', labelcolor='blue')
 
-    ax2 = ax1.twinx()
-
-    ax2.plot(timeList, velocityHistory[2], color='red', label='Velocity (m/s)')
-    ax2.set_ylabel('Velocity (m/s)', color='red')
-    ax2.tick_params(axis='y', labelcolor='red')
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
-
-    plt.title('Vertical Motion vs Time')
+    # 1. Altitude vs. Time
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, positionHistory[2], label='Altitude')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Altitude (m)')
+    plt.title('Altitude vs. Time')
+    plt.grid(True)
+    plt.legend()
     plt.tight_layout()
+
+
+    # 2. Vertical Velocity vs. Time
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, velocityHistory[2], label='Vertical Velocity')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Vertical Velocity (m/s)')
+    plt.title('Vertical Velocity vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    # 3. Net Force vs. Time
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, forceHistory[2], label='Net Force')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Net Force (N)')
+    plt.title('Net Force vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    # 4. Vertical Position vs. Planar Position
+    plt.figure(figsize=(10, 6))
+    plt.plot(positionHistory[0], positionHistory[2], label='Flight Path')
+    plt.xlabel('Planar Position (m)')
+    plt.ylabel('Vertical Position / Altitude (m)')
+    plt.title('Vertical Position vs. Planar Position')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    # Display all four graphs
     plt.show()
+
 
 def Output(time, position):
     os.system("cls")
