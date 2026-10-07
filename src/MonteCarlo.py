@@ -576,6 +576,13 @@ def Histo_results():
     plt.title('Mach Distribution')
     plt.grid(True)
 
+    # Graph 9
+    plt.figure(figsize=(10, 6))
+    plt.hist(machTime, bins='auto', alpha=0.7, label='Mach Time')
+    plt.xlabel('Mach Time (s)')
+    plt.ylabel('Frequency')
+    plt.title('Mach Time Distribution')
+    plt.grid(True)
 
     plt.show()
 
@@ -591,12 +598,19 @@ if __name__ == "__main__":
             results.append(result)
             print(f"Completed {i}/{sampleCount} simulations", end="\r")
 
-    scalars = [r[:8] for r in results]
-    histories = [r[8:11] for r in results]
-    (rodList, apogeeList, maxVList, timeToMaxList, totalTimeList, groundHitList, rangeList, machList) = map(list, zip(*scalars))
-    nominal_history = run_Randoms(None, nominal=True)[8:11]
-    nominalTester = run_Randoms(None, nominal=True)
-
+    scalars = [r[:9] for r in results]
+    histories = [r[9:12] for r in results]
+    (rodList, apogeeList, maxVList, timeToMaxList, totalTimeList, groundHitList, rangeList, machList, machTime) = map(list, zip(*scalars))
+    nominal_history = run_Randoms(None, nominal=True)[9:12]
+    counter = 0
+    for i in range(len(machList)):
+        if machList[i] >= 1:
+            counter += 1
+    print(f"Number of simulations that exceeded Mach 1: {counter} out of {sampleCount}")
+    print(f"Mean of Maximum Mach: {np.mean(machList)}")
+    print(f"Standard Deviation of Maximum Mach: {np.std(machList)}")
+    print(f"Median of Maximum Mach: {np.median(machList)}")
+    
     make_ensemble_plots(nominal_history, histories, outdir=".", show=True)
     make_dispersion_plot(nominal_history, histories, outdir=".", show=True,
                      background="site.png",
@@ -604,3 +618,4 @@ if __name__ == "__main__":
                      nominal_land=(nominal_history[1][0][-1], nominal_history[1][1][-1]),
                      nominal_apogee=(nominal_history[1][0][nominal_history[1][2].argmax()], nominal_history[1][1][nominal_history[1][2].argmax()]))  
     Histo_results()
+
