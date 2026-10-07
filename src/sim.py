@@ -625,7 +625,7 @@ def normalForce(airVelocity, position, AOA):
     C_N_alpha = normalForceCoefficientDerivative(airVelocity, position, AOA)
     return (1/2)*rho*V**2 * A_ref * C_N_alpha * AOA
 
-def centerOfPreswwq1sure(airVelocity, position, AOA):
+def centerOfPressure(airVelocity, position, AOA):
     if AOA != 0:
         return (pitchMomentCoefficientDerivative(airVelocity, position, AOA)/normalForceCoefficientDerivative(airVelocity, position, AOA))*bodyDiameter
     else:
