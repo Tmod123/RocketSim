@@ -1,0 +1,435 @@
+<?xml version='1.0' encoding='utf-8'?>
+<openrocket version="1.10" creator="OpenRocket 24.12">
+  <rocket>
+    <name>Honey</name>
+    <id>66c9647a-0b89-44f0-ba5a-7dbf87814a00</id>
+    <axialoffset method="absolute">0.0</axialoffset>
+    <position type="absolute">0.0</position>
+    <comment>final disign done 9/16/2026</comment>
+    <designer>Logan Simmank</designer>
+    <designtype>original</designtype>
+    <motorconfiguration configid="e26966ed-4fdd-4567-8197-b8ea7ac3c6e0" default="true">
+      <stage number="0" active="true"/>
+    </motorconfiguration>
+    <referencetype>maximum</referencetype>
+
+    <subcomponents>
+      <stage>
+        <name>Sustainer</name>
+        <id>70f4c11b-1925-4da1-b313-dd6249562600</id>
+
+        <subcomponents>
+          <nosecone>
+            <name>Nose Cone</name>
+            <id>30e7e050-32db-4811-831a-668e88981e60</id>
+            <finish>smooth</finish>
+            <material type="bulk" density="1050.0" group="Other">Polystyrene, cast, bulk</material>
+            <length>0.32384999999999997</length>
+            <thickness>0.003175</thickness>
+            <shape>ogive</shape>
+            <shapeparameter>1.0</shapeparameter>
+            <aftradius>0.0508</aftradius>
+            <aftshoulderradius>0.04927599999999999</aftshoulderradius>
+            <aftshoulderlength>0.0508</aftshoulderlength>
+            <aftshoulderthickness>0.0038099999999999996</aftshoulderthickness>
+            <aftshouldercapped>false</aftshouldercapped>
+            <isflipped>false</isflipped>
+          </nosecone>
+
+          <bodytube>
+            <name>Body Tube</name>
+            <id>e79d8550-fdb2-40f2-910f-e69019c731ca</id>
+            <finish>smooth</finish>
+            <material type="bulk" density="1300.0" group="Composites">Blue tube</material>
+            <length>0.381</length>
+            <thickness>0.002</thickness>
+            <radius>auto 0.0508</radius>
+
+            <subcomponents>
+              <masscomponent>
+                <name>ebay</name>
+                <id>922824ae-cb32-4ac2-a0e5-bcba7ca28bac</id>
+                <color red="0" green="204" blue="51" alpha="255"/>
+                <linestyle>dashed</linestyle>
+                <axialoffset method="top">0.15</axialoffset>
+                <position type="top">0.15</position>
+                <packedlength>0.025</packedlength>
+                <packedradius>0.0125</packedradius>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <mass>0.1</mass>
+                <masscomponenttype>masscomponent</masscomponenttype>
+              </masscomponent>
+
+              <bulkhead>
+                <name>Bulkhead</name>
+                <id>7b2b189b-6ed7-495c-a9c5-cb0fbfbfa6b8</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0</instanceseparation>
+                <axialoffset method="bottom">-0.17018</axialoffset>
+                <position type="bottom">-0.17018</position>
+                <material type="bulk" density="500.0" group="Woods">Basswood</material>
+                <length>0.0127</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>auto</outerradius>
+              </bulkhead>
+
+              <parachute>
+                <name>drouge</name>
+                <id>ab1a178a-9f90-4ffa-b938-249fc733da65</id>
+                <preset type="PARACHUTE" manufacturer="BalsaMachining" partno="CHUTE12-N" digest="3fc7044effc0e5929da0acbc755b4011"/>
+                <axialoffset method="top">0.22859999999999994</axialoffset>
+                <position type="top">0.22859999999999994</position>
+                <packedlength>0.025</packedlength>
+                <packedradius>0.0125</packedradius>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <cd>auto</cd>
+                <material type="surface" density="0.0527" group="Other">Nylon fabric, ripstop, 1.7 oz actual</material>
+                <deployevent>apogee</deployevent>
+                <deployaltitude>200.0</deployaltitude>
+                <deploydelay>0.0</deploydelay>
+                <diameter>0.30479999999999996</diameter>
+                <linecount>6</linecount>
+                <linelength>0.30479999999999996</linelength>
+                <linematerial type="line" density="0.0016" group="Other">Nylon Paracord, 110 lb, 1/16 in. dia.</linematerial>
+              </parachute>
+
+              <parachute>
+                <name>main</name>
+                <id>77b23797-fc16-478b-81f7-890dd4610338</id>
+                <preset type="PARACHUTE" manufacturer="Fruity Chutes" partno="CFC-048-N" digest="2a5b362b2d09a347dd9835b4a883806a"/>
+                <axialoffset method="top">0.3302</axialoffset>
+                <position type="top">0.3302</position>
+                <overridemass>0.20695152</overridemass>
+                <overridesubcomponentsmass>false</overridesubcomponentsmass>
+                <packedlength>0.08140409463181941</packedlength>
+                <packedradius>auto 0.048799999999999996</packedradius>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <cd>1.55</cd>
+                <material type="surface" density="0.035653924" group="Other">Ripstop nylon, lightweight, 3 mil</material>
+                <deployevent>altitude</deployevent>
+                <deployaltitude>304.8</deployaltitude>
+                <deploydelay>0.0</deploydelay>
+                <diameter>1.2191999999999998</diameter>
+                <linecount>12</linecount>
+                <linelength>1.40208</linelength>
+                <linematerial type="line" density="0.002952756" group="Other">Nylon #200 IIa Paraline [flat 4.0 mm, 5/32 in]</linematerial>
+              </parachute>
+
+              <shockcord>
+                <name>Shock Cord</name>
+                <id>492a666f-1744-4479-82d3-8875378c16ab</id>
+                <axialoffset method="top">0.2793999999999999</axialoffset>
+                <position type="top">0.2793999999999999</position>
+                <packedlength>0.025</packedlength>
+                <packedradius>0.0125</packedradius>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <cordlength>4.3</cordlength>
+                <material type="line" density="0.02723097" group="ThreadsLines">Nylon flat webbing lg. (14 mm, 9/16 in)</material>
+              </shockcord>
+            </subcomponents>
+          </bodytube>
+
+          <bodytube>
+            <name>Body Tube</name>
+            <id>39055b40-85a4-406c-b4d4-0399eded1933</id>
+            <finish>smooth</finish>
+            <material type="bulk" density="1300.0" group="Composites">Blue tube</material>
+            <length>1.1429999999999993</length>
+            <thickness>0.0015748000000000012</thickness>
+            <radius>0.0511048</radius>
+
+            <subcomponents>
+              <innertube>
+                <name>Inner Tube</name>
+                <id>004b2167-7a20-400d-9227-70269493cfab</id>
+                <axialoffset method="bottom">0.0</axialoffset>
+                <position type="bottom">0.0</position>
+                <material type="bulk" density="950.0" group="Composites">Kraft phenolic</material>
+                <length>1.03505</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>0.0396748</outerradius>
+                <thickness>0.0015748000000000081</thickness>
+                <clusterconfiguration>single</clusterconfiguration>
+                <clusterscale>1.0</clusterscale>
+                <clusterrotation>0.0</clusterrotation>
+                <motormount>
+                  <ignitionevent>automatic</ignitionevent>
+                  <ignitiondelay>0.0</ignitiondelay>
+                  <overhang>0.0</overhang>
+                  <motor configid="e26966ed-4fdd-4567-8197-b8ea7ac3c6e0">
+                    <type>hybrid</type>
+                    <manufacturer>HyperTEK</manufacturer>
+                    <digest>0e1789731d65dab7fbc2922bdcee86e4</digest>
+                    <designation>1685CCRGL-L550</designation>
+                    <diameter>0.075</diameter>
+                    <length>1.031</length>
+                    <delay>0.0</delay>
+                  </motor>
+                  <ignitionconfiguration configid="e26966ed-4fdd-4567-8197-b8ea7ac3c6e0">
+                    <ignitionevent>automatic</ignitionevent>
+                    <ignitiondelay>0.0</ignitiondelay>
+                  </ignitionconfiguration>
+                </motormount>
+              </innertube>
+
+              <centeringring>
+                <name>Centering Ring</name>
+                <id>369dba4a-45de-4120-8693-37cac35ea01a</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0</instanceseparation>
+                <axialoffset method="bottom">-0.334</axialoffset>
+                <position type="bottom">-0.334</position>
+                <material type="bulk" density="500.0" group="Woods">Basswood</material>
+                <length>0.019049999999999997</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>auto</outerradius>
+                <innerradius>auto</innerradius>
+              </centeringring>
+
+              <centeringring>
+                <name>Centering Ring</name>
+                <id>c7fef001-958c-4a18-b669-e573a4fc3656</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0</instanceseparation>
+                <axialoffset method="bottom">-0.883</axialoffset>
+                <position type="bottom">-0.883</position>
+                <material type="bulk" density="500.0" group="Woods">Basswood</material>
+                <length>0.019049999999999997</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>auto</outerradius>
+                <innerradius>auto</innerradius>
+              </centeringring>
+
+              <bulkhead>
+                <name>Bulkhead</name>
+                <id>9e900578-3c2d-4364-86d2-624bf3e36f12</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0</instanceseparation>
+                <axialoffset method="bottom">-1.03505</axialoffset>
+                <position type="bottom">-1.03505</position>
+                <material type="bulk" density="500.0" group="Woods">Basswood</material>
+                <length>0.0127</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>auto</outerradius>
+              </bulkhead>
+
+              <tubecoupler>
+                <name>Tube Coupler</name>
+                <id>4e4be86d-75d6-4685-88f4-3c514bfd2a27</id>
+                <axialoffset method="bottom">-1.0665999999999995</axialoffset>
+                <position type="bottom">-1.0665999999999995</position>
+                <material type="bulk" density="950.0" group="Composites">Kraft phenolic</material>
+                <length>0.2032</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>auto</outerradius>
+                <thickness>0.002</thickness>
+              </tubecoupler>
+
+              <freeformfinset>
+                <name>Freeform Fin Set</name>
+                <id>ed82427f-ae91-433a-84e3-405adbc98fd3</id>
+                <instancecount>4</instancecount>
+                <fincount>4</fincount>
+                <radiusoffset method="surface">0.0</radiusoffset>
+                <angleoffset method="relative">0.0</angleoffset>
+                <rotation>0.0</rotation>
+                <axialoffset method="bottom">0.0</axialoffset>
+                <position type="bottom">0.0</position>
+                <finish>smooth</finish>
+                <material type="bulk" density="500.0" group="Woods">Basswood</material>
+                <thickness>0.00635</thickness>
+                <crosssection>rounded</crosssection>
+                <cant>0.0</cant>
+                <filletradius>0.0</filletradius>
+                <filletmaterial type="bulk" density="1800.0" group="Custom">JB weld</filletmaterial>
+                <finpoints>
+                  <point x="0.0" y="0.0"/>
+                  <point x="0.1279069252335045" y="0.01764233451496614"/>
+                  <point x="0.2770400118116049" y="0.0740038387715931"/>
+                  <point x="0.328273438653477" y="0.0"/>
+                </finpoints>
+              </freeformfinset>
+
+              <railbutton>
+                <name>Rail Button</name>
+                <id>7ba8d613-e663-4132-b8e9-ba6d306f5d1e</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0582</instanceseparation>
+                <angleoffset method="relative">130.0</angleoffset>
+                <axialoffset method="middle">-0.3175</axialoffset>
+                <position type="middle">-0.3175</position>
+                <finish>normal</finish>
+                <material type="bulk" density="1420.0" group="Plastics">Delrin</material>
+                <outerdiameter>0.0097</outerdiameter>
+                <innerdiameter>0.008</innerdiameter>
+                <height>0.0097</height>
+                <baseheight>0.002</baseheight>
+                <flangeheight>0.002</flangeheight>
+                <screwheight>0.0</screwheight>
+              </railbutton>
+
+              <railbutton>
+                <name>Rail Button</name>
+                <id>fcb577a6-57d5-4221-93e3-e7d688089fde</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0582</instanceseparation>
+                <angleoffset method="relative">130.0</angleoffset>
+                <axialoffset method="middle">0.2286</axialoffset>
+                <position type="middle">0.2286</position>
+                <finish>normal</finish>
+                <material type="bulk" density="1420.0" group="Plastics">Delrin</material>
+                <outerdiameter>0.0097</outerdiameter>
+                <innerdiameter>0.008</innerdiameter>
+                <height>0.0097</height>
+                <baseheight>0.002</baseheight>
+                <flangeheight>0.002</flangeheight>
+                <screwheight>0.0</screwheight>
+              </railbutton>
+
+              <centeringring>
+                <name>Centering Ring</name>
+                <id>4385694c-b082-445b-a5e8-cd98c663faaf</id>
+                <instancecount>1</instancecount>
+                <instanceseparation>0.0</instanceseparation>
+                <axialoffset method="bottom">-0.025399999999999947</axialoffset>
+                <position type="bottom">-0.025399999999999947</position>
+                <material type="bulk" density="500.0" group="Woods">Basswood</material>
+                <length>0.0127</length>
+                <radialposition>0.0</radialposition>
+                <radialdirection>0.0</radialdirection>
+                <outerradius>auto</outerradius>
+                <innerradius>auto</innerradius>
+              </centeringring>
+            </subcomponents>
+          </bodytube>
+        </subcomponents>
+      </stage>
+    </subcomponents>
+  </rocket>
+
+  <simulations>
+    <simulation status="notsimulated">
+      <name>Simulation 1</name>
+      <simulator>RK4Simulator</simulator>
+      <calculator>BarrowmanCalculator</calculator>
+      <conditions>
+        <configid>e26966ed-4fdd-4567-8197-b8ea7ac3c6e0</configid>
+        <launchrodlength>1.0</launchrodlength>
+        <launchintowind>true</launchintowind>
+        <launchrodangle>0.0</launchrodangle>
+        <launchroddirection>90.0</launchroddirection>
+        <windaverage>2.0</windaverage>
+        <windturbulence>0.1</windturbulence>
+        <winddirection>1.5707963267948966</winddirection>
+        <wind model="average">
+          <speed>2.0</speed>
+          <direction>1.5707963267948966</direction>
+          <standarddeviation>0.2</standarddeviation>
+        </wind>
+        <wind model="multilevel" altituderef="msl">
+          <windlevel altitude="0.0" speed="2.0" direction="1.5707963267948966" standarddeviation="0.2"/>
+        </wind>
+        <windmodeltype>Average</windmodeltype>
+        <launchaltitude>0.0</launchaltitude>
+        <launchlatitude>28.61</launchlatitude>
+        <launchlongitude>-80.6</launchlongitude>
+        <geodeticmethod>spherical</geodeticmethod>
+        <atmosphere model="isa"/>
+        <timestep>0.05</timestep>
+        <maxtime>1200.0</maxtime>
+      </conditions>
+      <flightdata maxaltitude="3341.164" maxvelocity="343.868" maxacceleration="117.337" maxmach="1.021" timetoapogee="23.708" flighttime="146.939" groundhitvelocity="6.828" launchrodvelocity="15.433" deploymentvelocity="37.39" optimumdelay="17.35">
+        <warning type="Other">
+          <id>29e5e6e3-03d8-4d23-8e2c-66e79495fb83</id>
+          <description>Discontinuity in rocket body diameter</description>
+          <priority>LOW</priority>
+          <source>e79d8550-fdb2-40f2-910f-e69019c731ca</source>
+          <source>39055b40-85a4-406c-b4d4-0399eded1933</source>
+          Discontinuity in rocket body diameter:  &quot;Body Tube&quot;, &quot;Body Tube&quot;
+        </warning>
+        <warning type="HighSpeedDeployment">
+          <id>314f2873-3c0e-4a19-8d2e-6373e3774b61</id>
+          <description>Recovery device deployment at high speed (123 ft/s)</description>
+          <priority>NORMAL</priority>
+          <source>77b23797-fc16-478b-81f7-890dd4610338</source>
+          <parameter>37.39044709868531</parameter>
+          Recovery device deployment at high speed (123 ft/s):  &quot;main&quot;
+        </warning>
+      </flightdata>
+    </simulation>
+
+    <simulation status="notsimulated">
+      <name>Simulation 2</name>
+      <simulator>RK4Simulator</simulator>
+      <calculator>BarrowmanCalculator</calculator>
+      <conditions>
+        <configid>e26966ed-4fdd-4567-8197-b8ea7ac3c6e0</configid>
+        <launchrodlength>1.0</launchrodlength>
+        <launchintowind>true</launchintowind>
+        <launchrodangle>0.0</launchrodangle>
+        <launchroddirection>90.0</launchroddirection>
+        <windaverage>2.0</windaverage>
+        <windturbulence>0.1</windturbulence>
+        <winddirection>1.5707963267948966</winddirection>
+        <wind model="average">
+          <speed>2.0</speed>
+          <direction>1.5707963267948966</direction>
+          <standarddeviation>0.2</standarddeviation>
+        </wind>
+        <wind model="multilevel" altituderef="msl">
+          <windlevel altitude="0.0" speed="2.0" direction="1.5707963267948966" standarddeviation="0.2"/>
+        </wind>
+        <windmodeltype>Average</windmodeltype>
+        <launchaltitude>0.0</launchaltitude>
+        <launchlatitude>28.61</launchlatitude>
+        <launchlongitude>-80.6</launchlongitude>
+        <geodeticmethod>spherical</geodeticmethod>
+        <atmosphere model="isa"/>
+        <timestep>0.05</timestep>
+        <maxtime>1200.0</maxtime>
+      </conditions>
+      <flightdata maxaltitude="3139.16" maxvelocity="337.701" maxacceleration="118.183" maxmach="1.003" timetoapogee="22.758" flighttime="141.062" groundhitvelocity="6.777" launchrodvelocity="15.518" deploymentvelocity="37.226" optimumdelay="16.4">
+        <warning type="Other">
+          <id>a9b85bff-9b4c-4637-ba18-091727e94001</id>
+          <description>Discontinuity in rocket body diameter</description>
+          <priority>LOW</priority>
+          <source>e79d8550-fdb2-40f2-910f-e69019c731ca</source>
+          <source>39055b40-85a4-406c-b4d4-0399eded1933</source>
+          Discontinuity in rocket body diameter:  &quot;Body Tube&quot;, &quot;Body Tube&quot;
+        </warning>
+        <warning type="HighSpeedDeployment">
+          <id>341c4ce8-3de7-48d7-9c86-e68788c29dd7</id>
+          <description>Recovery device deployment at high speed (122 ft/s)</description>
+          <priority>NORMAL</priority>
+          <source>77b23797-fc16-478b-81f7-890dd4610338</source>
+          <parameter>37.22643588024003</parameter>
+          Recovery device deployment at high speed (122 ft/s):  &quot;main&quot;
+        </warning>
+      </flightdata>
+    </simulation>
+  </simulations>
+  <photostudio>
+  </photostudio>
+  <docprefs>
+    <docmaterials>
+      <material>BULK|Balsa, bulk, BMS typical|112.0|Other</material>
+      <material>BULK|JB weld|1800.0|Custom</material>
+      <material>LINE|Nylon #200 IIa Paraline [flat 4.0 mm, 5/32 in]|0.002952756|Other</material>
+      <material>LINE|Nylon Paracord, 110 lb, 1/16 in. dia.|0.0016|Other</material>
+      <material>SURFACE|Nylon fabric, ripstop, 1.7 oz actual|0.0527|Other</material>
+      <material>BULK|Polystyrene, cast, bulk|1050.0|Other</material>
+      <material>SURFACE|Ripstop nylon, lightweight, 3 mil|0.035653924|Other</material>
+      <material>BULK|Vulcanized Fiber|1153.5|Other</material>
+    </docmaterials>
+  </docprefs>
+</openrocket>
