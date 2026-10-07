@@ -195,6 +195,22 @@ launch_vector = np.array([np.sin(launchAngle)*np.cos(launchDirection), np.sin(la
 CG_dry = 1.0463  # m from nose tip — computed mass property
 CG_wet = 1.0774  # m from nose tip — same
 
+cpBiasZ = random.gauss(0,1)          # per-run draw ~N(0,1); 0 = nominal
+cpSigmaBase = 0.10     # cal, 1-sigma away from Mach 1
+cpSigmaPeak = 0.30     # cal, extra 1-sigma at Mach 1
+cpWidth = 0.22         # Mach half-width of the bump
+cpJitter = 0.1         # cal, time-varying wander (0 = off)
+cpNoiseTimes, cpNoise = [], []
+
+
+cpNoiseTimes = [i*0.1 for i in range(10000)]
+cpNoise, c1, c2 = [], 0.0, 0.0
+for i in range(10000):              # same AR(2) filter as the wind
+    c = random.gauss(0,1) + (5/6)*c1 - (5/24)*c2
+    c2, c1 = c1, c
+    cpNoise.append(c)
+#cpNoise = np.array(cpNoise)/np.std(cpNoise)
+
 def quaternion_multiply(q1, q2):
 
     w1, x1, y1, z1 = q1
@@ -464,22 +480,26 @@ def C_D_friction(airVelocity, position):
     return C_D_body + C_D_fins
 
 def nosePressureDrag(airVelocity, position):
-    kappa=(1/1) #rho_t/rho in current case both are equal so for performance, it will be simplified.
-    M = machNumber(airVelocity,position)
-    epsilon = np.arctan(bodyDiameter/(2*noseLength))
+    jointAngle_phi=0.0
+    kappa=1.0
+    M = machNumber(airVelocity, position)
     gamma = 1.4
-    C_D_At_M1 = np.sin(epsilon)
-    slope = 4/(gamma+1) * (1-0.5*C_D_At_M1)
-    if M < 0.8:
-        return 0.8*np.sin(epsilon)**2
-    elif M < 1:
-        coneDragCoefficient = 0.8*np.sin(epsilon)**2
-        return  (0.72*(kappa-0.5)**2 + 0.82)* coneDragCoefficient #the correction factor is only used for ogival shapes, which we are, therefor for now well assume it  
-    elif M < 1.3:
-        coneDragCoefficient = (3*slope+C_D_At_M1-2*np.sin(epsilon)**2)*(M-0.8)+0.8*np.sin(epsilon)**2
-    else:
-        coneDragCoefficient = slope*M + C_D_At_M1
-    return  (0.72*(kappa-0.5)**2 + 0.82)* coneDragCoefficient #the correction factor is only used for ogival shapes, which we are, therefor for now well assume it  
+    eps = np.arctan(bodyDiameter/(2*noseLength))         
+    s = np.sin(eps)
+    K = 0.72*(kappa-0.5)**2 + 0.82                       
+    C0 = 0.8*np.sin(jointAngle_phi)**2                   
+    C1 = K*s                                              
+    dC1 = K*4/(gamma+1)*(1-0.5*s)                         
+    def sup(m):  return K*(2.1*s**2 + 0.5*s/np.sqrt(m**2-1))   
+    def dsup(m): return -K*0.5*s*m/(m**2-1)**1.5
+    if M <= 1:                                            
+        a = C1 - C0
+        return a*M**(dC1/a) + C0
+    if M < 1.3:                                          
+        h = 0.3; t = (M-1)/h
+        return ((2*t**3-3*t**2+1)*C1 + (t**3-2*t**2+t)*dC1*h
+                + (-2*t**3+3*t**2)*sup(1.3) + (t**3-t**2)*dsup(1.3)*h)
+    return sup(M)  
 
 def finPressureDrag(time, airVelocity, position):
     M = machNumber(airVelocity, position)
@@ -605,7 +625,7 @@ def normalForce(airVelocity, position, AOA):
     C_N_alpha = normalForceCoefficientDerivative(airVelocity, position, AOA)
     return (1/2)*rho*V**2 * A_ref * C_N_alpha * AOA
 
-def centerOfPressure(airVelocity, position, AOA):
+def centerOfPreswwq1sure(airVelocity, position, AOA):
     if AOA != 0:
         return (pitchMomentCoefficientDerivative(airVelocity, position, AOA)/normalForceCoefficientDerivative(airVelocity, position, AOA))*bodyDiameter
     else:
@@ -635,20 +655,6 @@ def thrust_magnitude(time):
     return float(np.interp(time, timeCurve, thrustCurve, right=0.0))
 
 def mass(time):
-    # currentImpulse=0
-    # netImpulse=0
-    # for i in range(1,len(timeCurve)):
-    #     if time < timeCurve[0]:
-    #         currentImpulse = thrust_magnitude(time) * time
-    #     elif timeCurve[i] <= time:
-    #         currentImpulse += 0.5*(thrustCurve[i]+thrustCurve[i-1])*(timeCurve[i]-timeCurve[i-1])
-    #     else:
-    #         currentImpulse += 0.5*(thrust_magnitude(time)+thrustCurve[i-1]) * (time-timeCurve[i-1])
-    #         break
-    # for i in range(1,len(timeCurve)):
-    #     netImpulse += (0.5*(thrustCurve[i]+thrustCurve[i-1])*(timeCurve[i]-timeCurve[i-1]))
-    # currentFuelMass=fuelMass*(1-(currentImpulse/netImpulse))
-    # return dryMass + currentFuelMass
     if time <= timeCurve[0]:
         currentImpulse = thrust_magnitude(time) * time
     elif time >= timeCurve[-1]:
@@ -667,13 +673,28 @@ def mass(time):
 def centerOfGravity(time):
     return (CG_dry*dryMass+CT*(mass(time)-dryMass))/(mass(time))
 
+
+
+# --- CP uncertainty (calibers) ---
+
+def cpSigma(M):
+    return cpSigmaBase + cpSigmaPeak*np.exp(-((M-1)/cpWidth)**2)
+
+def cpOffset(time, M):
+    """CP shift in metres (+ = aft = more stable)."""
+    bump = np.exp(-((M-1)/cpWidth)**2)
+    wander = float(np.interp(time, cpNoiseTimes, cpNoise)) if cpJitter else 0.0
+    return (cpBiasZ*cpSigma(M) + cpJitter*bump*wander) * bodyDiameter
+
+
+
 def derivatives(time, position, velocity, orientation, angular_velocity):
     wind = float(np.interp(time, timeWindSpeeds, windSpeeds, right=0.0))
     windVector = wind*np.array([np.sin(windHeading), np.cos(windHeading), 0])
     airFlow_velocity_world = velocity - windVector
     airFlow_velocity_body = inverse_rotate_vector(orientation, airFlow_velocity_world)
     AOA = angle_of_attack(airFlow_velocity_body)
-    CP = centerOfPressure(airFlow_velocity_world, position, AOA)
+    CP = centerOfPressure(airFlow_velocity_world, position, AOA) + cpOffset(time, machNumber(airFlow_velocity_world, position))
     CG = centerOfGravity(time)
 
     airFlow_speed = np.linalg.norm(airFlow_velocity_body)
@@ -879,7 +900,17 @@ if __name__ == "__main__":
         if dist1 < rodLength <= dist2:
             rodVelocity = np.linalg.norm((velocityHistory[:, i]+velocityHistory[:, i+1])/2)
             break
-    print(f"Velocity off rod: {rodVelocity:.3f} m/s, Apogee: {max(positionHistory[2]):.3f} m, Max Velocity: {max(velocityHistory[2]):.3f} m/s, Time to Apogee: {timeList[np.argmax(positionHistory[2])]:.3f} s, Flight Time: {timeList[-1]:.3f} s, Ground hit velocity: {velocityHistory[2][-1]:.3f} m/s, Range from launch: {np.sqrt(positionHistory[0][-1]**2 + positionHistory[1][-1]**2):.3f} m, Mach: {max(machList)}")
+    for i in range(len(timeList)-1):
+        if machList[i] >= 1:
+            machTimei = i
+            break
+    if machTimei:
+        for i in range(machTimei+1,len(timeList)-1):
+            if machList[i] <= 1:
+                machTimef = i
+                break
+    machTime = timeList[machTimef] - timeList[machTimei]
+    print(f"Velocity off rod: {rodVelocity:.3f} m/s, Apogee: {max(positionHistory[2]):.3f} m, Max Velocity: {max(velocityHistory[2]):.3f} m/s, Time to Apogee: {timeList[np.argmax(positionHistory[2])]:.3f} s, Flight Time: {timeList[-1]:.3f} s, Ground hit velocity: {velocityHistory[2][-1]:.3f} m/s, Range from launch: {np.sqrt(positionHistory[0][-1]**2 + positionHistory[1][-1]**2):.3f} m, Mach: {max(machList)}, Mach for {machTime:.3f} s")
     sys.stdout.flush()
     plot_results()
 
