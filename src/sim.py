@@ -1,4 +1,4 @@
-#sim.py - V3.5
+#sim.py - V4
 import matplotlib.pyplot as plt 
 import numpy as np
 import csv
@@ -70,8 +70,7 @@ def fin_geometry(finset_key, finset):
             finset["height"],
         )
  
-    # freeformfinset (and anything else without direct chord/sweep fields):
-    # derive an equivalent trapezoid from the fin's outline points.
+    # derives an estimated trapezoid from the fin's outline points.
     points = as_list(finset["finpoints"]["point"])
     xs = [p["@attributes"]["x"] for p in points]
     ys = [p["@attributes"]["y"] for p in points]
@@ -166,9 +165,8 @@ motors = as_list(motormount["motor"])
 motorDiameter = motors[0]["diameter"]
  
 # --- Parachute(s) -----------------------------------------------------
-# A rocket may have more than one (e.g. drogue + main), possibly on
-# different body tubes. Compute the area for each; the largest-diameter
-# one is treated as "the" main parachute for a single parachuteArea value.
+
+
 parachutes = bt_comps.get("parachute", [])
 parachuteAreas_all = [np.pi * (p["diameter"] / 2) ** 2 for p in parachutes]
 if parachuteAreas_all:
@@ -176,7 +174,7 @@ if parachuteAreas_all:
     parachuteArea = parachuteAreas_all[main_index]
 else:
     parachuteArea = None
-parachuteDragCoefficient = 0.80  # not stored numerically ("auto" in file)
+parachuteDragCoefficient = 0.80 
 parachuteArea = 0.07306
 finSets = 1
 transitions = 1 if "transition" in comps else 0
@@ -184,32 +182,31 @@ MainDeploymentAltitude = 305
 MainArea = 1.169
 MainDragCoefficient = 1.550
 epsilonAngle = 0 #basically transition angle for nosecone, 0 since smooth, but a cone could be like 15
-surfaceRoughness = 20e-6    # meters — needs a materials-roughness table/guess
-launchGuideRoughness = 60e-6    # meters — same as above
-dryMass = 4.991  # kg — mass properties computed during simulation
-fuelMass = 1.552   # kg — motor propellant mass
-rodLength   = 1.0                  # m — launch condition, not part of <rocket>
-launchAngle = np.radians(2)
+surfaceRoughness = 20e-6    # meters 
+launchGuideRoughness = 60e-6    # meters 
+dryMass = 4.991  # kg 
+fuelMass = 1.552   # kg 
+rodLength   = 1.0      # m            
+launchAngle = np.radians(2) # from vertical
 launchDirection = np.radians(-135) #heading
 launch_vector = np.array([np.sin(launchAngle)*np.cos(launchDirection), np.sin(launchAngle) * np.sin(launchDirection), np.cos(launchAngle)])
-CG_dry = 1.0463  # m from nose tip — computed mass property
-CG_wet = 1.0774  # m from nose tip — same
+CG_dry = 1.0463  
+CG_wet = 1.0774 
 
-cpBiasZ = random.gauss(0,1)          # per-run draw ~N(0,1); 0 = nominal
-cpSigmaBase = 0.10     # cal, 1-sigma away from Mach 1
-cpSigmaPeak = 0.30     # cal, extra 1-sigma at Mach 1
-cpWidth = 0.22         # Mach half-width of the bump
-cpJitter = 0.1         # cal, time-varying wander (0 = off)
+cpBiasZ = random.gauss(0,1)         
+cpSigmaBase = 0.10     
+cpSigmaPeak = 0.30     
+cpWidth = 0.22       
+cpJitter = 0.1        
 cpNoiseTimes, cpNoise = [], []
 
 
 cpNoiseTimes = [i*0.1 for i in range(10000)]
 cpNoise, c1, c2 = [], 0.0, 0.0
-for i in range(10000):              # same AR(2) filter as the wind
+for i in range(10000):              
     c = random.gauss(0,1) + (5/6)*c1 - (5/24)*c2
     c2, c1 = c1, c
     cpNoise.append(c)
-#cpNoise = np.array(cpNoise)/np.std(cpNoise)
 
 def quaternion_multiply(q1, q2):
 
@@ -321,9 +318,9 @@ def quaternion_from_two_vectors(v1, v2):
 
 
 
-position = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-velocity = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-orientation = quaternion_from_two_vectors(np.array([0.0,0.0,1.0]),launch_vector) #w, x, y, z. where x is pitch, y is yaw, z is roll, is body orientated
+position = np.array([0.0, 0.0, 0.0]) #world
+velocity = np.array([0.0, 0.0, 0.0]) #world
+orientation = quaternion_from_two_vectors(np.array([0.0,0.0,1.0]),launch_vector) #w, x, y, z. body orientated
 angular_velocity = np.array([0.0, 0.0, 0.0]) #x, y, z, is body orientated
 
 positionHistory = np.empty((3,0))
@@ -349,7 +346,7 @@ x_n1 = 0
 x_n2 = 0
 avgWindSpeed = 5 #m/s
 turbulence = 0.15 #Turbulence Intensity.
-windHeading = np.radians(45) #radians, 0 is wind to the north, pi/2 is wind to the east, pi is wind to the south, 3pi/2 is wind to the west
+windHeading = np.radians(45) #radians heading
 
 #calculated values
 Y1 = np.sqrt(finSpan**2+(sweepLength+tipChord/2-rootChord/2)**2) #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
@@ -572,7 +569,7 @@ def normalForceFinCoefficientDerivative(airVelocity, position):
     C_Nalpha0 = 2*np.pi/beta
     AR = 2*(finSpan**2)/A_fin
     F_D = AR/((1/(2*np.pi))*C_Nalpha0*np.cos(midchordSweepAngle))
-    C_N_1fin = (C_Nalpha0 * F_D * (A_fin/A_ref) * np.cos(midchordSweepAngle))/(2+F_D*np.sqrt(1+4/(F_D**2)))    #(2*np.pi*((finSpan**2)/A_ref))/(2+((beta*finSpan**2)/(A_fin*np.cos(midchordSweepAngle))))
+    C_N_1fin = (C_Nalpha0 * F_D * (A_fin/A_ref) * np.cos(midchordSweepAngle))/(2+F_D*np.sqrt(1+4/(F_D**2)))    
     C_N_fins = (numberOfFins/2) * C_N_1fin
     K_TB = 1 + (bodyRadius/(finSpan+bodyRadius))
     return K_TB * C_N_fins
@@ -625,14 +622,13 @@ def normalForce(airVelocity, position, AOA):
     C_N_alpha = normalForceCoefficientDerivative(airVelocity, position, AOA)
     return (1/2)*rho*V**2 * A_ref * C_N_alpha * AOA
 
-def centerOfPreswwq1sure(airVelocity, position, AOA):
+def centerOfPressure(airVelocity, position, AOA):
     if AOA != 0:
         return (pitchMomentCoefficientDerivative(airVelocity, position, AOA)/normalForceCoefficientDerivative(airVelocity, position, AOA))*bodyDiameter
     else:
         return CP
 
 def moment_of_inertia(time):
-    # Assuming a simple cylindrical rocket for now
     Mass = mass(time)
     CG = centerOfGravity(time)
     
@@ -791,11 +787,6 @@ def run_simulation():
         machList.append(machNumber(velocity - windVector, position))
         AOAList.append(angle_of_attack(velocity))
         if velocity[2] >= 0:
-            #CDList.append(parasiticDrag(velocity,position))
-            #CDList.append(baseDragCoefficient(time, velocity, position))
-            #CDList.append(finPressureDrag(time, velocity, position))
-            #CDList.append(nosePressureDrag(velocity, position))
-            #CDList.append(C_D_friction(velocity, position))
             CDList.append(axialDragCoefficient(time, velocity - windVector, position, angle_of_attack(velocity)))
         else:
             CDList.append(parachuteDragCoefficient)
@@ -847,7 +838,7 @@ def plot_results():
 
     # 4. Vertical Position vs. Planar Position
     plt.figure(figsize=(10, 6))
-    plt.plot(positionHistory[0], positionHistory[2], label='Flight Path')
+    plt.plot(np.sqrt(positionHistory[0]**2 + positionHistory[1]**2), positionHistory[2], label='Flight Path')
     plt.xlabel('Planar Position (m)')
     plt.ylabel('Vertical Position / Altitude (m)')
     plt.title('Vertical Position vs. Planar Position')
@@ -913,6 +904,3 @@ if __name__ == "__main__":
     print(f"Velocity off rod: {rodVelocity:.3f} m/s, Apogee: {max(positionHistory[2]):.3f} m, Max Velocity: {max(velocityHistory[2]):.3f} m/s, Time to Apogee: {timeList[np.argmax(positionHistory[2])]:.3f} s, Flight Time: {timeList[-1]:.3f} s, Ground hit velocity: {velocityHistory[2][-1]:.3f} m/s, Range from launch: {np.sqrt(positionHistory[0][-1]**2 + positionHistory[1][-1]**2):.3f} m, Mach: {max(machList)}, Mach for {machTime:.3f} s")
     sys.stdout.flush()
     plot_results()
-
-# if __name__ == "__main__":
-#     print(A_wet_nose)

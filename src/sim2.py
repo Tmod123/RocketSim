@@ -29,11 +29,11 @@ bodyLength=0
 motorDiameter = 0
 launchGuideLength, launchGuideOuterDiameter, launchGuideInnerDiameter = 0,0,0
 rodVelocity = None
-cpBiasZ = 0.0          # per-run draw ~N(0,1); 0 = nominal
-cpSigmaBase = 0.10     # cal, 1-sigma away from Mach 1
-cpSigmaPeak = 0.30     # cal, extra 1-sigma at Mach 1
-cpWidth = 0.22         # Mach half-width of the bump
-cpJitter = 0.0         # cal, time-varying wander (0 = off)
+cpBiasZ = 0.0          # 
+cpSigmaBase = 0.10     # 
+cpSigmaPeak = 0.30     # 
+cpWidth = 0.22         #
+cpJitter = 0.1         # 
 def quaternion_multiply(q1, q2):
 
     w1, x1, y1, z1 = q1
@@ -144,9 +144,9 @@ def quaternion_from_two_vectors(v1, v2):
 
 
 
-position = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-velocity = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-orientation = np.array([0.0, 0.0, 0.0, 0.0]) #w, x, y, z. where x is pitch, y is yaw, z is roll, is body orientated
+position = np.array([0.0, 0.0, 0.0]) # world orientated
+velocity = np.array([0.0, 0.0, 0.0]) # world orientated
+orientation = np.array([0.0, 0.0, 0.0, 0.0]) #w, x, y, z.  body orientated
 angular_velocity = np.array([0.0, 0.0, 0.0]) #x, y, z, is body orientated
 
 positionHistory = np.empty((3,0))
@@ -175,7 +175,7 @@ x_n1 = 0
 x_n2 = 0
 finSpan, rootChord, tipChord, sweepLength, noseLength, bodytubeLength, finThickness = 0,0,0,0,0,0,0
 bodyDiameter = 0
-#calculated values
+
 Y1 = 0 #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
 A_fin = 0
 finenessRatio = 0 #unitless, ratio of the length of the rocket to the diameter of the rocket
@@ -189,7 +189,7 @@ CP = 0
 
 cpNoise = []
 
-cpNoiseTimes = [i*0.1 for i in range(10000)]
+cpNoiseTimes = []
 
 def initcenterOfPressure():
     CN_n = 2
@@ -202,7 +202,6 @@ def initcenterOfPressure():
     netMoment = Pn + Pf1
     return netMoment/netNormalForce
 
-#motor_csv = import_Motor_Data(fileName)
 timeCurve = np.empty(0)
 thrustCurve = np.empty(0)
 
@@ -289,18 +288,18 @@ def nosePressureDrag(airVelocity, position):
     kappa=1.0
     M = machNumber(airVelocity, position)
     gamma = 1.4
-    eps = np.arctan(bodyDiameter/(2*noseLength))          # (B.3)
+    eps = np.arctan(bodyDiameter/(2*noseLength))         
     s = np.sin(eps)
-    K = 0.72*(kappa-0.5)**2 + 0.82                        # (B.8)
-    C0 = 0.8*np.sin(jointAngle_phi)**2                    # (3.86)
-    C1 = K*s                                              # (B.6)
-    dC1 = K*4/(gamma+1)*(1-0.5*s)                         # (B.5)
-    def sup(m):  return K*(2.1*s**2 + 0.5*s/np.sqrt(m**2-1))   # (B.4)
+    K = 0.72*(kappa-0.5)**2 + 0.82                       
+    C0 = 0.8*np.sin(jointAngle_phi)**2                    
+    C1 = K*s                                           
+    dC1 = K*4/(gamma+1)*(1-0.5*s)                       
+    def sup(m):  return K*(2.1*s**2 + 0.5*s/np.sqrt(m**2-1))  
     def dsup(m): return -K*0.5*s*m/(m**2-1)**1.5
-    if M <= 1:                                            # (3.87)
+    if M <= 1:                                         
         a = C1 - C0
         return a*M**(dC1/a) + C0
-    if M < 1.3:                                           # cubic Hermite, 1 -> 1.3
+    if M < 1.3:                                          
         h = 0.3; t = (M-1)/h
         return ((2*t**3-3*t**2+1)*C1 + (t**3-2*t**2+t)*dC1*h
                 + (-2*t**3+3*t**2)*sup(1.3) + (t**3-t**2)*dsup(1.3)*h)
@@ -377,7 +376,7 @@ def normalForceFinCoefficientDerivative(airVelocity, position):
     C_Nalpha0 = 2*np.pi/beta
     AR = 2*(finSpan**2)/A_fin
     F_D = AR/((1/(2*np.pi))*C_Nalpha0*np.cos(midchordSweepAngle))
-    C_N_1fin = (C_Nalpha0 * F_D * (A_fin/A_ref) * np.cos(midchordSweepAngle))/(2+F_D*np.sqrt(1+4/(F_D**2)))    #(2*np.pi*((finSpan**2)/A_ref))/(2+((beta*finSpan**2)/(A_fin*np.cos(midchordSweepAngle))))
+    C_N_1fin = (C_Nalpha0 * F_D * (A_fin/A_ref) * np.cos(midchordSweepAngle))/(2+F_D*np.sqrt(1+4/(F_D**2)))    
     C_N_fins = (numberOfFins/2) * C_N_1fin
     K_TB = 1 + ((bodyDiameter/2)/(finSpan+(bodyDiameter/2)))
     return K_TB * C_N_fins
@@ -437,7 +436,6 @@ def centerOfPressure(airVelocity, position, AOA):
         return CP
 
 def moment_of_inertia(time):
-    # Assuming a simple cylindrical rocket for now
     Mass = mass(time)
     CG = centerOfGravity(time)
     
@@ -576,7 +574,7 @@ def rk4_step(time, position, velocity, orientation, angular_velocity):
     return (new_position,new_velocity,new_orientation,new_angular_velocity)
 
 def run_simulation(INITTEMP, INITALT, INITPRE, AVGSPEED, TURB, HEAD, PARACD, PARAAREA, DEPALT , MAINAREA, MAINCD, MAINROUGH, GUIDEROUGH, DRYM, FUELM, LAUNCHANG, LAUNCHDIR, CGDRY, CGWET, BDIA, THRUSTC, TIMEC, FSPAN, ROOT, TIP, SWEEP, NOSELENGTH, BODYLENGTH, THICK, MOTORDIA, GUIDEL, GUIDEOD, GUIDEID, FINNUM):
-    global time, position, velocity, orientation, angular_velocity, positionHistory, velocityHistory, forceHistory, orientationHistory, angularVelocityHistory, momentHistory, machList, initialTemperature, initialAltitude, initialPressure, avgWindSpeed, turbulence, windHeading, parachuteDragCoefficient, parachuteArea, MainDeploymentAltitude, MainArea, MainDragCoefficient, surfaceRoughness, launchGuideRoughness, dryMass, fuelMass, launchAngle, launchDirection, CG_dry, CG_wet, CT, bodyDiameter, thrustCurve, timeCurve, _segment_impulse, cumulativeImpulse, netImpulse,  finSpan, rootChord, tipChord, sweepLength, noseLength, bodytubeLength, leadingEdgeToNosecone, finThickness, Y1, A_fin, finenessRatio, meanAerodynamicChordLengthOfFin, A_wet_nose, noseVolume, A_wet_body, A_wet_fins, A_ref, leadingEdgeAngle, motorDiameter, launchGuideLength, launchGuideOuterDiameter, launchGuideInnerDiameter, CP, rodVelocity, leftRod, timeList, massList, machList, AOAList, CDList, timeWindSpeeds, windSpeeds, x_n1, x_n2, numberOfFins, cpNoise
+    global time, position, velocity, orientation, angular_velocity, positionHistory, velocityHistory, forceHistory, orientationHistory, angularVelocityHistory, momentHistory, machList, initialTemperature, initialAltitude, initialPressure, avgWindSpeed, turbulence, windHeading, parachuteDragCoefficient, parachuteArea, MainDeploymentAltitude, MainArea, MainDragCoefficient, surfaceRoughness, launchGuideRoughness, dryMass, fuelMass, launchAngle, launchDirection, CG_dry, CG_wet, CT, bodyDiameter, thrustCurve, timeCurve, _segment_impulse, cumulativeImpulse, netImpulse,  finSpan, rootChord, tipChord, sweepLength, noseLength, bodytubeLength, leadingEdgeToNosecone, finThickness, Y1, A_fin, finenessRatio, meanAerodynamicChordLengthOfFin, A_wet_nose, noseVolume, A_wet_body, A_wet_fins, A_ref, leadingEdgeAngle, motorDiameter, launchGuideLength, launchGuideOuterDiameter, launchGuideInnerDiameter, CP, rodVelocity, leftRod, timeList, massList, machList, AOAList, CDList, timeWindSpeeds, windSpeeds, x_n1, x_n2, numberOfFins, cpNoise, cpBiasZ, cpNoiseTimes
 
     initialTemperature, initialAltitude, initialPressure, avgWindSpeed, turbulence, windHeading, parachuteDragCoefficient, parachuteArea, MainDeploymentAltitude, MainArea, MainDragCoefficient, surfaceRoughness, launchGuideRoughness, dryMass, fuelMass, launchAngle, launchDirection, CG_dry, CG_wet, bodyDiameter, thrustCurve, timeCurve, finSpan, rootChord, tipChord, sweepLength, noseLength, bodytubeLength, finThickness, motorDiameter, launchGuideLength, launchGuideOuterDiameter, launchGuideInnerDiameter, numberOfFins = INITTEMP, INITALT, INITPRE, AVGSPEED, TURB, HEAD, PARACD, PARAAREA, DEPALT , MAINAREA, MAINCD, MAINROUGH, GUIDEROUGH, DRYM, FUELM, LAUNCHANG, LAUNCHDIR, CGDRY, CGWET, BDIA, THRUSTC, TIMEC, FSPAN, ROOT, TIP, SWEEP, NOSELENGTH, BODYLENGTH, THICK, MOTORDIA, GUIDEL, GUIDEOD, GUIDEID, FINNUM
     CT = (CG_wet*(dryMass+fuelMass)-CG_dry*dryMass)/(fuelMass)
@@ -596,15 +594,15 @@ def run_simulation(INITTEMP, INITALT, INITPRE, AVGSPEED, TURB, HEAD, PARACD, PAR
     A_wet_body = np.pi * bodyDiameter * bodytubeLength + A_wet_nose #meters^2, this is the wetted area of the body of the rocket
     A_wet_fins = numberOfFins*(finSpan*(rootChord+tipChord)+finThickness*(rootChord+tipChord+np.sqrt(sweepLength**2 + finSpan**2)+np.sqrt((sweepLength+tipChord-rootChord)**2+finSpan**2))) #meters^2, this is the wetted area of the fins of the rocket
     A_ref = np.pi * ((bodyDiameter/2)**2) #meters^2, this is the reference area of the rocket, which is the cross-sectional area of the rocket body
-
+    
     CP = initcenterOfPressure() # m from the nose tip
 
     leadingEdgeAngle = np.arctan(sweepLength / finSpan)
 
     time = 0
-    position = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-    velocity = np.array([0.0, 0.0, 0.0]) #North, East, Up, is world orientated
-    orientation = quaternion_from_two_vectors(np.array([0.0,0.0,1.0]),launch_vector) #w, x, y, z. where x is pitch, y is yaw, z is roll, is body orientated
+    position = np.array([0.0, 0.0, 0.0]) #world orientated
+    velocity = np.array([0.0, 0.0, 0.0]) # world orientated
+    orientation = quaternion_from_two_vectors(np.array([0.0,0.0,1.0]),launch_vector) # body orientated
 
 
 
@@ -631,10 +629,12 @@ def run_simulation(INITTEMP, INITALT, INITPRE, AVGSPEED, TURB, HEAD, PARACD, PAR
 
    
     c1, c2 = 0.0, 0.0
-    for i in range(10000):              # same AR(2) filter as the wind
+    cpBiasZ = random.gauss(0,1)          
+    for i in range(0,10000):              
         c = random.gauss(0,1) + (5/6)*c1 - (5/24)*c2
         c2, c1 = c1, c
         cpNoise.append(c)
+        cpNoiseTimes.append(i*0.1)
 
     for i in range(0,10000):
         w_n = random.gauss(0,1)
@@ -686,18 +686,7 @@ def run_simulation(INITTEMP, INITALT, INITPRE, AVGSPEED, TURB, HEAD, PARACD, PAR
             break
     if rodVelocity is None:
         rodVelocity = 0
-    machTime = 0
-    for i in range(len(timeList)-1):
-        if machList[i] >= 1:
-            machTimei = i
-            break
-    if machTimei:
-        for i in range(machTimei+1,len(timeList)-1):
-            if machList[i] <= 1:
-                machTimef = i
-                break
-    machTime = timeList[machTimef] - timeList[machTimei]
-    return (rodVelocity, max(positionHistory[2]), max(velocityHistory[2]), timeList[np.argmax(positionHistory[2])], timeList[-1], velocityHistory[2][-1], np.sqrt(positionHistory[0][-1]**2 + positionHistory[1][-1]**2), max(machList), machTime, timeList, positionHistory, velocityHistory)
+    return (rodVelocity, max(positionHistory[2]), max(velocityHistory[2]), timeList[np.argmax(positionHistory[2])], timeList[-1], velocityHistory[2][-1], np.sqrt(positionHistory[0][-1]**2 + positionHistory[1][-1]**2), max(machList), timeList, positionHistory, velocityHistory)
 
     #return positionHistory, velocityHistory, machList, massList, forceHistory, orientationHistory, angularVelocityHistory, momentHistory, AOAList, CDList
 #(rodVelocity, max(positionHistory[2]), max(velocityHistory[2]), timeList[np.argmax(positionHistory[2])], timeList[-1], velocityHistory[2][-1], np.sqrt(positionHistory[0][-1]**2 + positionHistory[1][-1]**2), max(machList))

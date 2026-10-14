@@ -18,10 +18,8 @@ BUCKETS = [
 ]
  
  
-# Where things sit inside one run's history, and which column is "up".
-# Edit these if your history is ordered differently.
-T_IDX, POS_IDX, VEL_IDX = 0, 1, 2   # index of time, position, velocity
-Z_COL = 2                           # columns are x, y, z
+T_IDX, POS_IDX, VEL_IDX = 0, 1, 2   
+Z_COL = 2 
  
  
 def _column(a, col):
@@ -114,7 +112,7 @@ def make_ensemble_plots(nominal, runs, outdir=".", show=True):
     axes[0].set_title(f"Altitude, all runs (n={len(runs)})")
     axes[1].set_title(f"Vertical velocity, all runs (n={len(runs)})")
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "ensemble_all.png"), dpi=150)
+    #fig.savefig(os.path.join(outdir, "ensemble_all.png"), dpi=150)
     if not show:
         plt.close(fig)
  
@@ -131,7 +129,7 @@ def make_ensemble_plots(nominal, runs, outdir=".", show=True):
     axes[0].set_title("Altitude, colored by distance from center")
     axes[1].set_title("Vertical velocity, colored by distance from center")
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "ensemble_buckets.png"), dpi=150)
+    #fig.savefig(os.path.join(outdir, "ensemble_buckets.png"), dpi=150)
     if not show:
         plt.close(fig)
  
@@ -205,7 +203,7 @@ def make_dispersion_plot(nominal, runs, outdir=".", show=True,
     ax.set_title(r"1$\sigma$, 2$\sigma$ and 3$\sigma$ Dispersion Ellipses: Apogee and Landing Points")
     ax.legend(loc="upper right")
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, "dispersion_ellipses.png"), dpi=150)
+    #fig.savefig(os.path.join(outdir, "dispersion_ellipses.png"), dpi=150)
     if not show:
         plt.close(fig)
  
@@ -452,12 +450,6 @@ sampleCount = 1000
 
 def run_Randoms(simulationNumber, nominal=False):
 
-    # print(
-    #     f"Simulation {simulationNumber} | "
-    #     f"PID: {os.getpid()} | "
-    #     f"Random: {random.random()}"
-    # )
-
     if nominal == True:
         return sim2.run_simulation(initialTemperature, initialAltitude, initialPressure, avgWindSpeed, turbulence, windHeading, parachuteDragCoefficient, parachuteArea, MainDeploymentAltitude, MainArea, MainDragCoefficient, surfaceRoughness, launchGuideRoughness, dryMass, fuelMass, launchAngle, launchDirection, CG_dry, CG_wet, bodyDiameter, thrustCurve, timeCurve, finSpan, rootChord, tipChord, sweepLength, noseLength, bodytubeLength, finThickness, motorDiameter, launchGuideLength, launchGuideOuterDiameter, launchGuideInnerDiameter, numberOfFins)
 
@@ -507,7 +499,7 @@ def run_Randoms(simulationNumber, nominal=False):
 def Histo_results():
     # Graph 1
     plt.figure(figsize=(10, 6))
-    plt.hist(rodList, bins='auto', alpha=0.7, label='Rod Velocity')
+    plt.hist(rodList, bins='sqrt', alpha=0.7, label='Rod Velocity')
     plt.xlabel('Rod Velocity (m/s)')
     plt.ylabel('Frequency')
     plt.title('Rod Velocity Distribution')
@@ -516,7 +508,7 @@ def Histo_results():
 
     # Graph 2
     plt.figure(figsize=(10, 6))
-    plt.hist(apogeeList, bins='auto', alpha=0.7, label='Apogee')
+    plt.hist(apogeeList, bins='sqrt', alpha=0.7, label='Apogee')
     plt.xlabel('Apogee (m)')
     plt.ylabel('Frequency')
     plt.title('Apogee Distribution')
@@ -525,7 +517,7 @@ def Histo_results():
 
     # Graph 3
     plt.figure(figsize=(10, 6))
-    plt.hist(maxVList, bins='auto', alpha=0.7, label='Max Velocity')
+    plt.hist(maxVList, bins='sqrt', alpha=0.7, label='Max Velocity')
     plt.xlabel('Max Velocity (m/s)')
     plt.ylabel('Frequency')
     plt.title('Max Velocity Distribution')
@@ -534,7 +526,7 @@ def Histo_results():
 
     # Graph 4
     plt.figure(figsize=(10, 6))
-    plt.hist(timeToMaxList, bins='auto', alpha=0.7, label='Time to Apogee')
+    plt.hist(timeToMaxList, bins='sqrt', alpha=0.7, label='Time to Apogee')
     plt.xlabel('Time to Apogee (s)')
     plt.ylabel('Frequency')
     plt.title('Time to Apogee Distribution')
@@ -543,7 +535,7 @@ def Histo_results():
 
     # Graph 5
     plt.figure(figsize=(10, 6))
-    plt.hist(totalTimeList, bins='auto', alpha=0.7, label='Total Flight Time')
+    plt.hist(totalTimeList, bins='sqrt', alpha=0.7, label='Total Flight Time')
     plt.xlabel('Total Flight Time (s)')
     plt.ylabel('Frequency')
     plt.title('Total Flight Time Distribution')
@@ -552,7 +544,7 @@ def Histo_results():
 
     # Graph 6
     plt.figure(figsize=(10, 6))
-    plt.hist(groundHitList, bins='auto', alpha=0.7, label='Ground Hit Velocity')
+    plt.hist(groundHitList, bins='sqrt', alpha=0.7, label='Ground Hit Velocity')
     plt.xlabel('Ground Hit Velocity (m/s)')
     plt.ylabel('Frequency')
     plt.title('Ground Hit Velocity Distribution')
@@ -561,7 +553,7 @@ def Histo_results():
 
     # Graph 7
     plt.figure(figsize=(10, 6))
-    plt.hist(rangeList, bins='auto', alpha=0.7, label='Range')
+    plt.hist(rangeList, bins='sqrt', alpha=0.7, label='Range')
     plt.xlabel('Range (m)')
     plt.ylabel('Frequency')
     plt.title('Range Distribution')
@@ -570,25 +562,17 @@ def Histo_results():
 
     # Graph 8
     plt.figure(figsize=(10, 6))
-    plt.hist(machList, bins='auto', alpha=0.7, label='Mach')
+    plt.hist(machList, bins='sqrt', alpha=0.7, label='Mach')
     plt.xlabel('Mach')
     plt.ylabel('Frequency')
     plt.title('Mach Distribution')
-    plt.grid(True)
-
-    # Graph 9
-    plt.figure(figsize=(10, 6))
-    plt.hist(machTime, bins='auto', alpha=0.7, label='Mach Time')
-    plt.xlabel('Mach Time (s)')
-    plt.ylabel('Frequency')
-    plt.title('Mach Time Distribution')
     plt.grid(True)
 
     plt.show()
 
 
 if __name__ == "__main__":
-    num_cores = max(1, cpu_count() - 1)  # Use all but one core
+    num_cores = max(1, cpu_count())  # Use all but one core
     print(f"Using {num_cores} CPU cores")
     print(f"Running {sampleCount} simulations...")
 
@@ -598,10 +582,10 @@ if __name__ == "__main__":
             results.append(result)
             print(f"Completed {i}/{sampleCount} simulations", end="\r")
 
-    scalars = [r[:9] for r in results]
-    histories = [r[9:12] for r in results]
-    (rodList, apogeeList, maxVList, timeToMaxList, totalTimeList, groundHitList, rangeList, machList, machTime) = map(list, zip(*scalars))
-    nominal_history = run_Randoms(None, nominal=True)[9:12]
+    scalars = [r[:8] for r in results]
+    histories = [r[8:11] for r in results]
+    (rodList, apogeeList, maxVList, timeToMaxList, totalTimeList, groundHitList, rangeList, machList) = map(list, zip(*scalars))
+    nominal_history = run_Randoms(None, nominal=True)[8:11]
     counter = 0
     for i in range(len(machList)):
         if machList[i] >= 1:
@@ -611,7 +595,7 @@ if __name__ == "__main__":
     print(f"Standard Deviation of Maximum Mach: {np.std(machList)}")
     print(f"Median of Maximum Mach: {np.median(machList)}")
     
-    make_ensemble_plots(nominal_history, histories, outdir=".", show=True)
+    #make_ensemble_plots(nominal_history, histories, outdir=".", show=True)
     make_dispersion_plot(nominal_history, histories, outdir=".", show=True,
                      background="site.png",
                      extent=(-1115, 885, -1015, 985),
