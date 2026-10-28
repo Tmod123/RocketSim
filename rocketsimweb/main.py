@@ -52,7 +52,22 @@ if "summary" in streamlit.session_state:
 with streamlit.sidebar:
     streamlit.button("run simulation", on_click=run_button_pressed)
 
-    uploaded_file = streamlit.file_uploader("Choose a motor file", type="csv")
+    uploaded_rocket = streamlit.file_uploader(
+        "Choose a rocket file", 
+        type="csv", 
+        key="rocket_file_uploader"
+    )
+    if uploaded_rocket is not None:
+        # Parse straight from the uploaded bytes - never touches disk, so
+        # concurrent users can't clobber each other's rocket file.
+        text = uploaded_rocket.getvalue().decode("utf-8")
+        streamlit.session_state.sim.set_rocket_data(io.StringIO(text))
+
+    uploaded_file = streamlit.file_uploader(
+        "Choose a motor file", 
+        type="csv", 
+        key="motor_file_uploader"
+    )
     if uploaded_file is not None:
         # Parse straight from the uploaded bytes - never touches disk, so
         # concurrent users can't clobber each other's motor file.
@@ -77,7 +92,7 @@ with streamlit.sidebar:
     )
     dry_mass = streamlit.number_input(
         "main deployment altitude (m)",
-        value=305,
+        value=305.0,
         format="%.5f",
         key="main_deployment_altitude_input",
         on_change=update_variable,
@@ -132,16 +147,16 @@ with streamlit.sidebar:
         args=("fuelMass", "fuel_mass_input")
     )
     dry_mass = streamlit.number_input(
-        "launch angle (deg)",
-        value=np.radians(2),
+        "launch angle (rad)",
+        value=np.radians(2.0),
         format="%.5f",
         key="launch_angle_input",
         on_change=update_variable,
         args=("launchAngle", "launch_angle_input")
     )
     dry_mass = streamlit.number_input(
-        "launch direction (deg)",
-        value=np.radians(-135),
+        "launch direction (rad)",
+        value=np.radians(-135.0),
         format="%.5f",
         key="launch_direction_input",
         on_change=update_variable,
@@ -173,7 +188,7 @@ with streamlit.sidebar:
     )
     dry_mass = streamlit.number_input(
         "initial altitude (m)",
-        value=492,
+        value=492.0,
         format="%.5f",
         key="initial_altitude_input",
         on_change=update_variable,
@@ -181,7 +196,7 @@ with streamlit.sidebar:
     )
     dry_mass = streamlit.number_input(
         "initial pressure (Pa)",
-        value=101550,
+        value=101550.0,
         format="%.5f",
         key="intial_pressure_input",
         on_change=update_variable,

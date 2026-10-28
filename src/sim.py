@@ -39,15 +39,29 @@ def as_list(x):
     return x if isinstance(x, list) else [x]
 
 def merge_bodytube_subcomponents(bodytubes):
-    """A rocket may have one body tube or several (e.g. an upper section
-    plus a lower fin/motor section). This merges every body tube's
-    subcomponents into one dict of lists, so the rest of the code can
-    search across all tubes without caring how many there are."""
+    """Collect components recursively from all body tubes and nested parts."""
     merged = {}
-    for bt in bodytubes:
-        for key, value in bt.get("subcomponents", {}).items():
-            merged.setdefault(key, []).extend(as_list(value))
+
+    def visit(component):
+        if isinstance(component, list):
+            for item in component:
+                visit(item)
+            return
+        if not isinstance(component, dict):
+            return
+        subcomponents = component.get("subcomponents", {})
+        if not isinstance(subcomponents, dict):
+            return
+        for key, value in subcomponents.items():
+            items = as_list(value)
+            merged.setdefault(key, []).extend(items)
+            for item in items:
+                visit(item)
+
+    for bodytube in bodytubes:
+        visit(bodytube)
     return merged
+
 
 def find_finset(merged_comps):
     """Finds whichever fin-set type is present (trapezoidfinset,
@@ -107,33 +121,81 @@ def find_launch_guide(merged_comps):
     raise KeyError("No launchlug or railbutton found on any body tube.")
 
 def find_motor_mount(bodytubes, merged_comps):
-    """Motor mount can sit directly on a body tube, or be nested inside an
-    inner tube (which itself can live on any body tube). Returns the
-    motor mount dict."""
+    """Find a motor mount anywhere in the body-tube component hierarchy."""
     for bt in bodytubes:
         if "motormount" in bt:
             return bt["motormount"]
- 
+
     for innertube in merged_comps.get("innertube", []):
         if "motormount" in innertube:
             return innertube["motormount"]
- 
-    raise KeyError("No motor mount found on any body tube or inner tube.")
 
-json_path = "rockets/JSON/rocket.json"
+    def search(component):
+        if isinstance(component, list):
+            for item in component:
+                result = search(item)
+                if result is not None:
+                    return result
+        elif isinstance(component, dict):
+            if "motormount" in component:
+                return component["motormount"]
+            for value in component.values():
+                if isinstance(value, (dict, list)):
+                    result = search(value)
+                    if result is not None:
+                        return result
+        return None
 
-with open(json_path) as f:
+    for bt in bodytubes:
+        result = search(bt)
+        if result is not None:
+            return result
+    raise KeyError("No motor mount found in any body tube or nested component.")
+
+# Load the OpenRocket JSON. An optional first argument can override the path.
+script_dir = os.path.dirname(os.path.abspath(__file__))
+json_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(script_dir, "Rockets/JSON/rocket.json")
+if not os.path.exists(json_path):
+    fallback_path = os.path.join(script_dir, "rocket.json")
+    if os.path.exists(fallback_path):
+        json_path = fallback_path
+    else:
+        raise FileNotFoundError(
+            f"Could not find rocket JSON at {json_path!r}. "
+            "Pass its path as the first command-line argument."
+        )
+
+with open(json_path, encoding="utf-8") as f:
     data = json.load(f)
- 
+
 rocket = data["rocket"]
-stage = rocket["subcomponents"]["stage"]  # single-stage rocket
- 
-comps = stage["subcomponents"]
-nosecone = as_list(comps["nosecone"])[0]  # assumes one nose cone
-bodytubes = as_list(comps["bodytube"])    # one tube, or several — handled the same way
- 
+stages = as_list(rocket.get("subcomponents", {}).get("stage"))
+if not stages:
+    raise KeyError("The JSON does not contain rocket.subcomponents.stage.")
+
+# OpenRocket exports stages as a list; components are split between stages.
+stage_components = [stage.get("subcomponents", {}) for stage in stages]
+nosecones = [
+    item for components in stage_components
+    for item in as_list(components.get("nosecone"))
+]
+bodytubes = [
+    item for components in stage_components
+    for item in as_list(components.get("bodytube"))
+]
+if not nosecones:
+    raise KeyError("No nosecone found in any stage.")
+if not bodytubes:
+    raise KeyError("No bodytube found in any stage.")
+
+nosecone = nosecones[0]
+comps = {}
+for components in stage_components:
+    for key, value in components.items():
+        comps.setdefault(key, []).extend(as_list(value))
+
 bt_comps = merge_bodytube_subcomponents(bodytubes)
- 
+
 # --- Fins -----------------------------------------------------------
 finset_key, finset = find_finset(bt_comps)
 rootChord, tipChord, sweepLength, finSpan = fin_geometry(finset_key, finset)
@@ -174,24 +236,25 @@ if parachuteAreas_all:
     parachuteArea = parachuteAreas_all[main_index]
 else:
     parachuteArea = None
-parachuteDragCoefficient = 0.80 
-parachuteArea = 0.07306
+parachuteDragCoefficient = 0.8
+parachuteArea = 0.1640
 finSets = 1
 transitions = 1 if "transition" in comps else 0
-MainDeploymentAltitude = 305
-MainArea = 1.169
-MainDragCoefficient = 1.550
+MainDeploymentAltitude = 200
+MainDeploymentTime = 3
+MainArea = 2.6302
+MainDragCoefficient = .75
 epsilonAngle = 0 #basically transition angle for nosecone, 0 since smooth, but a cone could be like 15
 surfaceRoughness = 20e-6    # meters 
-launchGuideRoughness = 60e-6    # meters 
-dryMass = 4.991  # kg 
+launchGuideRoughness = 20e-6    # meters 
+dryMass = 6.046-1.552  # kg 
 fuelMass = 1.552   # kg 
-rodLength   = 1.0      # m            
-launchAngle = np.radians(2) # from vertical
+rodLength   = 3.0      # m            
+launchAngle = np.radians(4) # from vertical
 launchDirection = np.radians(-135) #heading
 launch_vector = np.array([np.sin(launchAngle)*np.cos(launchDirection), np.sin(launchAngle) * np.sin(launchDirection), np.cos(launchAngle)])
-CG_dry = 1.0463  
-CG_wet = 1.0774 
+CG_dry = .9835
+CG_wet = .9659
 
 cpBiasZ = random.gauss(0,1)         
 cpSigmaBase = 0.10     
@@ -344,11 +407,13 @@ temperatureLapseRate = 0.0065 #K/m
 AdiabaticIndex = 1.4 #unitless & constant for our purpose, value for air
 x_n1 = 0
 x_n2 = 0
-avgWindSpeed = 5 #m/s
+avgWindSpeed = 4 #m/s
 turbulence = 0.15 #Turbulence Intensity.
 windHeading = np.radians(45) #radians heading
 
 #calculated values
+terminalVelocity = np.sqrt((2*dryMass*gravity)/((initialPressure/(SpecificGasConstant*(initialTemperature+273.15)))*MainArea*MainDragCoefficient))
+MainDistanceDeployment = terminalVelocity*MainDeploymentTime
 Y1 = np.sqrt(finSpan**2+(sweepLength+tipChord/2-rootChord/2)**2) #supposed to be lambda or the distance on Fin at the mid-chord lines for set 1 (m)
 A_fin = (finSpan/2)*(tipChord+rootChord)
 finenessRatio = rocketLength/bodyDiameter #unitless, ratio of the length of the rocket to the diameter of the rocket
@@ -384,7 +449,11 @@ CT = (CG_wet*(dryMass+fuelMass)-CG_dry*dryMass)/(fuelMass)
 
 
 #motor_csv = import_Motor_Data(fileName)
-motor_csv = import_Motor_Data("Motors/Hypertek_L550.csv")
+motor_csv_path = os.path.join(script_dir, "Motors", "Hypertek_L550.csv")
+if not os.path.exists(motor_csv_path):
+    # Also allow running from a project directory that contains Motors/.
+    motor_csv_path = os.path.join(os.getcwd(), "Motors", "Hypertek_L550.csv")
+motor_csv = import_Motor_Data(motor_csv_path)
 timeCurve = np.array(motor_csv[0])
 thrustCurve = np.array(motor_csv[1])
 
@@ -558,6 +627,9 @@ def axialDragForce(time, airVelocity, position, AOA):
         A, C_A = A_ref, axialDragCoefficient(time, airVelocity, position, AOA)
     elif position[2] > MainDeploymentAltitude:
         A, C_A = parachuteArea, parachuteDragCoefficient
+    elif position[2] > MainDeploymentAltitude - MainDistanceDeployment:
+        A = parachuteArea + (position[2]-MainDeploymentAltitude) * (MainArea - parachuteArea)/(-MainDistanceDeployment)
+        C_A = parachuteDragCoefficient + (position[2]-MainDeploymentAltitude) * (MainDragCoefficient - parachuteDragCoefficient)/(MainDistanceDeployment)
     else:
         A, C_A = MainArea, MainDragCoefficient
     return (1/2)*rho*V**2 * A * C_A
@@ -846,6 +918,24 @@ def plot_results():
     plt.legend()
     plt.tight_layout()
 
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, massList, label='Flight Path')
+    plt.xlabel('Planar time (m)')
+    plt.ylabel('mass')
+    plt.title('Vertical Position vs. Planar Position')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, thrustCurve, label='Flight Path')
+    plt.xlabel('Planar time (m)')
+    plt.ylabel('mass')
+    plt.title('Vertical Position vs. Planar Position')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    
 
     # Display all four graphs
     plt.show()
