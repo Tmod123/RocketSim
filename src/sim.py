@@ -1,6 +1,7 @@
 #sim.py - V4
-import matplotlib.pyplot as plt 
-import numpy as np
+import importlib
+plt = importlib.import_module("matplotlib.pyplot")
+np = importlib.import_module("numpy")
 import csv
 import sys
 import random
@@ -247,8 +248,8 @@ MainDragCoefficient = .75
 epsilonAngle = 0 #basically transition angle for nosecone, 0 since smooth, but a cone could be like 15
 surfaceRoughness = 20e-6    # meters 
 launchGuideRoughness = 20e-6    # meters 
-dryMass = 6.046-1.552  # kg 
 fuelMass = 1.552   # kg 
+dryMass = 6.046-fuelMass  # kg 
 rodLength   = 3.0      # m            
 launchAngle = np.radians(4) # from vertical
 launchDirection = np.radians(-135) #heading
@@ -789,10 +790,7 @@ def derivatives(time, position, velocity, orientation, angular_velocity):
     thrust_world = rotate_vector(orientation, thrust_body)
 
     gravity_world = np.array([0.0, 0.0, -mass(time) * gravity])
-    if on_rod(position):
-        netForce_world = thrust_world
-    else:
-        netForce_world = thrust_world + gravity_world + aero_force_world
+    netForce_world = thrust_world + gravity_world + aero_force_world
 
     # Acceleration
     acceleration = netForce_world / mass(time)
@@ -868,7 +866,7 @@ def run_simulation():
 
         
         time += timeStep
-        if time*100 % 10 == 5:
+        if round(time,2)*100 % 10 == 5:
             Output(time, position)
 
 
@@ -920,18 +918,18 @@ def plot_results():
 
     plt.figure(figsize=(10, 6))
     plt.plot(timeList, massList, label='Flight Path')
-    plt.xlabel('Planar time (m)')
-    plt.ylabel('mass')
-    plt.title('Vertical Position vs. Planar Position')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Mass (kg)')
+    plt.title('Mass vs. Time')
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     
     plt.figure(figsize=(10, 6))
-    plt.plot(timeList, thrustCurve, label='Flight Path')
-    plt.xlabel('Planar time (m)')
-    plt.ylabel('mass')
-    plt.title('Vertical Position vs. Planar Position')
+    plt.plot(timeCurve, thrustCurve, label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Thrust (N)')
+    plt.title('Thrust vs. Time')
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
