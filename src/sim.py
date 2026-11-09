@@ -252,7 +252,7 @@ fuelMass = 1.552   # kg
 dryMass = 6.046-fuelMass  # kg 
 rodLength   = 3.0      # m            
 launchAngle = np.radians(4) # from vertical
-launchDirection = np.radians(-135) #heading
+launchDirection = np.radians(0) #heading
 launch_vector = np.array([np.sin(launchAngle)*np.cos(launchDirection), np.sin(launchAngle) * np.sin(launchDirection), np.cos(launchAngle)])
 CG_dry = .9835
 CG_wet = .9659
@@ -393,6 +393,7 @@ forceHistory = np.empty((3,0))
 orientationHistory = np.empty((3,0))
 angularVelocityHistory = np.empty((3,0))
 momentHistory = np.empty((3,0))
+airHistory = np.empty((3,0))
 
 
 #Constants
@@ -410,7 +411,7 @@ x_n1 = 0
 x_n2 = 0
 avgWindSpeed = 4 #m/s
 turbulence = 0.15 #Turbulence Intensity.
-windHeading = np.radians(45) #radians heading
+windHeading = np.radians(0) #radians heading
 
 #calculated values
 terminalVelocity = np.sqrt((2*dryMass*gravity)/((initialPressure/(SpecificGasConstant*(initialTemperature+273.15)))*MainArea*MainDragCoefficient))
@@ -839,7 +840,8 @@ def rk4_step(time, position, velocity, orientation, angular_velocity):
     return (new_position,new_velocity,new_orientation,new_angular_velocity)
 
 def run_simulation():
-    global time, position, velocity, orientation, angular_velocity, positionHistory, velocityHistory, forceHistory, orientationHistory, angularVelocityHistory, momentHistory, machList
+    global time, position, velocity, orientation, angular_velocity, positionHistory, velocityHistory, forceHistory, orientationHistory, angularVelocityHistory, momentHistory, machList, airHistory
+    os.system("cls")
     while -0.01 <= position[2] <= 10000000:  #limits the sim to actual atmosphere, avoid errors.
 
         euler_orientation = quaternion_to_euler(orientation)
@@ -850,6 +852,8 @@ def run_simulation():
         massList.append(mass(time))
         positionHistory = np.hstack((positionHistory, np.array(position).reshape(-1, 1)))
         velocityHistory = np.hstack((velocityHistory, np.array(velocity).reshape(-1, 1)))
+        airHistory = np.hstack((airHistory, np.array(velocity - windVector).reshape(-1, 1)))
+
         forceHistory = np.hstack((forceHistory, np.array(derivative[1] * mass(time)).reshape(-1, 1)))  
         orientationHistory = np.hstack((orientationHistory, np.array(euler_orientation).reshape(-1,1)))
         angularVelocityHistory = np.hstack((angularVelocityHistory, np.array(angular_velocity).reshape(-1, 1)))
@@ -863,7 +867,7 @@ def run_simulation():
 
         position, velocity, orientation, angular_velocity = rk4_step(time, position, velocity, orientation, angular_velocity)
 
-
+        
         
         time += timeStep
         if round(time,2)*100 % 10 == 5:
@@ -894,6 +898,30 @@ def plot_results():
     plt.legend()
     plt.tight_layout()
 
+    
+    # 2. Vertical Velocity vs. Time
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, airHistory[0], label='Vertical Velocity')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Vertical Air relative Velocity 0 (m/s)')
+    plt.title(' Velocity vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    # 2. Vertical Velocity vs. Time
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, airHistory[1], label='Vertical Velocity')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Vertical Air relative Velocity 1 (m/s)')
+    plt.title('Vertical Velocity vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+
 
     # 3. Net Force vs. Time
     plt.figure(figsize=(10, 6))
@@ -916,6 +944,18 @@ def plot_results():
     plt.legend()
     plt.tight_layout()
 
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(positionHistory[0], positionHistory[1], label='Flight Path')
+    plt.xlabel('X Position (m)')
+    plt.ylabel('Y Position (m)')
+    plt.title('Planar Position vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+    
+
     plt.figure(figsize=(10, 6))
     plt.plot(timeList, massList, label='Flight Path')
     plt.xlabel('Time (s)')
@@ -934,16 +974,95 @@ def plot_results():
     plt.legend()
     plt.tight_layout()
     
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, angularVelocityHistory[0], label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Pitch Rate (rad/s)')
+    plt.title('Pitch Rate vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, np.degrees(AOAList), label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angle of Attack (Deg)')
+    plt.title('Angle of Attack vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, orientationHistory[0], label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Pitch (deg)')
+    plt.title('Pitch  vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, CDList, label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Drag Coefficient')
+    plt.title('Drag Coefficient vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, angularVelocityHistory[1], label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Yaw Rate (rad/s)')
+    plt.title('Yaw Rate vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, orientationHistory[1], label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Yaw (deg)')
+    plt.title('Yaw  vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeList, np.sqrt(velocityHistory[0]**2 + velocityHistory[1]**2), label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Horizontal Velocity (m/s)')
+    plt.title('Horizontal Velocity vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(timeWindSpeeds, windSpeeds, label='Flight Path')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Wind Velocity (m/s)')
+    plt.title('Wind Velocity vs. Time')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
 
     # Display all four graphs
     plt.show()
 
 
 def Output(time, position):
-    os.system("cls")
-    print("Calclating...")
-    print(f"Time: {int(time*100)/100}")
-    print(f"Altitude: {position[2]}")
+    sys.stdout.write("\033[1;1H")
+    sys.stdout.write("Calclating...\n")
+    sys.stdout.write(f"Time: {int(time*100)/100}\n")
+    sys.stdout.write(f"Altitude: {round(position[2], 2)}")
+    sys.stdout.flush() # Add all output to one string then output all at once to save memory
 
 if __name__ == "__main__":
     print("Calculuting...")
